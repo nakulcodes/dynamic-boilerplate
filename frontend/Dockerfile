@@ -1,5 +1,5 @@
 # Use Node.js 20 for build
-FROM node:20-alpine as builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
@@ -9,7 +9,11 @@ COPY package*.json ./
 # Install dependencies
 RUN npm ci
 
-# Copy source code
+# Accept build argument for API URL
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
+
+# Copy source code (exclude .env to prevent local overrides)
 COPY . .
 
 # Build the application
