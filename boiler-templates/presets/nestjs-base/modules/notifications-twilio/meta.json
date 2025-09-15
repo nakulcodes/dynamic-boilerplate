@@ -8,9 +8,9 @@
   },
   "devDeps": {},
   "env": [
-    { "key": "TWILIO_ACCOUNT_SID", "required": true, "example": "AC1234567890abcdef1234567890abcdef" },
-    { "key": "TWILIO_AUTH_TOKEN", "required": true, "example": "1234567890abcdef1234567890abcdef" },
-    { "key": "TWILIO_PHONE_NUMBER", "required": true, "example": "+1234567890" },
+    { "key": "TWILIO_ACCOUNT_SID", "required": true, "example": "" },
+    { "key": "TWILIO_AUTH_TOKEN", "required": true, "example": "" },
+    { "key": "TWILIO_PHONE_NUMBER", "required": true, "example": "" },
     { "key": "TWILIO_WHATSAPP_NUMBER", "required": false, "example": "whatsapp:+1234567890" }
   ],
   "routes": [
