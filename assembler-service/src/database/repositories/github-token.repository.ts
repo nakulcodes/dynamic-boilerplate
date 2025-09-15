@@ -1,6 +1,6 @@
 import { Repository, DataSource } from 'typeorm';
 import { Injectable } from '@nestjs/common';
-import { GitHubToken } from '@db/entities/github-token.entity';
+import { GitHubToken } from '../entities/github-token.entity';
 
 @Injectable()
 export class GitHubTokenRepository extends Repository<GitHubToken> {
