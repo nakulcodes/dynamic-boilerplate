@@ -1,0 +1,61 @@
+{
+  "name": "rbac-system",
+  "description": "Complete Role-Based Access Control (RBAC) system with permissions, roles, guards, and decorators",
+  "deps": {
+    "@nestjs/passport": "^10.0.0",
+    "@nestjs/jwt": "^10.0.0",
+    "passport": "^0.6.0",
+    "passport-jwt": "^4.0.1",
+    "bcrypt": "^5.1.0"
+  },
+  "devDeps": {
+    "@types/bcrypt": "^5.0.0",
+    "@types/passport-jwt": "^3.0.9"
+  },
+  "env": [
+    "RBAC_SUPER_ADMIN_EMAIL",
+    "RBAC_SUPER_ADMIN_PASSWORD",
+    "RBAC_DEFAULT_ROLE"
+  ],
+  "filesPath": "files",
+  "conflicts": [],
+  "inject": {
+    "src/app.module.ts": {
+      "import": [
+        "import { RoleModule } from '@modules/role/role.module';",
+        "import { PermissionModule } from '@modules/permission/permission.module';",
+        "import { APP_GUARD } from '@nestjs/core';",
+        "import { RbacGuard } from '@common/guards/rbac.guard';"
+      ],
+      "register": [
+        "RoleModule",
+        "PermissionModule"
+      ],
+      "providers": [
+        "{ provide: APP_GUARD, useClass: RbacGuard }"
+      ]
+    }
+  },
+  "postInstall": [
+    "npm run migration:generate -- RbacInitial",
+    "npm run migration:run",
+    "npm run seed:rbac"
+  ],
+  "features": [
+    "Complete RBAC implementation with roles and permissions",
+    "Flexible permission system (resource:action format)",
+    "Role hierarchy with priority levels",
+    "Decorators for easy permission/role checking",
+    "Global RBAC guard for automatic protection",
+    "Database entities for roles and permissions",
+    "Seed data for default roles and permissions",
+    "Support for both ALL and ANY permission requirements",
+    "TypeScript interfaces for type safety",
+    "Extensible permission and role definitions"
+  ],
+  "requirements": [
+    "TypeORM must be configured",
+    "Authentication module must be present",
+    "User entity must exist with role relationship"
+  ]
+}
