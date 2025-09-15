@@ -1,4 +1,4 @@
-# Use Node.js LTS version
+# Use Node.js 20 version
 FROM node:20-alpine
 
 # Set working directory

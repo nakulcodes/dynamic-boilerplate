@@ -20,7 +20,7 @@ export class AssemblerService {
     private storageService: StorageService,
     private githubService: GitHubService,
   ) {
-    this.templatesPath = path.resolve(__dirname, '../../../boiler-templates');
+    this.templatesPath = path.resolve(__dirname, '../../boiler-templates');
   }
 
   async generateProject(generateDto: GenerateProjectDto): Promise<GenerationResult> {
