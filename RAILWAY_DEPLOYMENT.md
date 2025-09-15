@@ -47,9 +47,10 @@ railway up
 ### 2. Frontend
 
 #### Railway Configuration
-- `railway.json` configured for static site deployment
-- `Dockerfile` with nginx for production serving
-- Optimized nginx configuration with gzip and caching
+- `railway.json` configured for Docker deployment (due to Node.js version requirements)
+- `Dockerfile` with Node.js 20 for Vite compatibility
+- Uses `serve` for static file serving
+- Resolves crypto.hash build errors with correct Node.js version
 
 #### Environment Variables Required:
 ```env
