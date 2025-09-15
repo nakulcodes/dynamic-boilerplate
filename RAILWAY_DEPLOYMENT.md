@@ -7,6 +7,7 @@ This guide walks you through deploying the Dynamic Boilerplate Generator to Rail
 1. [Railway CLI](https://docs.railway.app/develop/cli) installed
 2. Railway account created
 3. GitHub repository connected to Railway
+4. Node.js 20+ (specified in .nvmrc and nixpacks.toml)
 
 ## Project Structure
 
