@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { GitHubService } from './github.service';
-import { GitHubTokenRepository } from '@db/repositories/github-token.repository';
-import { GitHubToken } from '@db/entities/github-token.entity';
+import { GitHubTokenRepository } from '../database/repositories/github-token.repository';
+import { GitHubToken } from '../database/entities/github-token.entity';
 import { UnauthorizedException, BadRequestException } from '@nestjs/common';
 
 describe('GitHubService', () => {
