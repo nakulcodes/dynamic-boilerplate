@@ -4,6 +4,7 @@ import { AssemblerModule } from './assembler/assembler.module';
 import { StorageModule } from './storage/storage.module';
 import { DatabaseModule } from './database/database.module';
 import { GitHubModule } from './github/github.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { GitHubModule } from './github/github.module';
     AssemblerModule,
     StorageModule,
     GitHubModule,
+    AuthModule,
   ],
   controllers: [],
   providers: [],

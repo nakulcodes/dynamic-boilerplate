@@ -26,6 +26,9 @@
 
 1. Now implement redis layer to store refresh token and add good and solid auth system. 
 
+"Create a clean, minimal, and highly aesthetic UI using shadcn/ui components. The design should feel modern and professional, inspired by Vercel’s design language – dark theme by default, smooth rounded corners, subtle gradients, and elegant typography. Use a lot of white space cards, and animated transitions with Framer Motion for a premium feel.
+
+The layout should follow a grid-based system, with balanced proportions and spacing. Focus on simplicity and elegance: avoid clutter, use no shadows, and ensure the components (cards, buttons, inputs, modals, navbars) look sleek, polished, and consistent.
 
 . config
 

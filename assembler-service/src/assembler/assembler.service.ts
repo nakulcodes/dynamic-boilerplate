@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import * as os from 'os';
-import { globby } from 'globby';
+import globby = require('globby');
 import * as Handlebars from 'handlebars';
 import { StorageService } from '../storage/storage.service';
 import { GitHubService } from '../github/github.service';

@@ -1,11 +1,15 @@
 import { Controller, Get, Post, Body, Param, Query, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
 import { GitHubService, CreateRepositoryDto, PushToRepoDto } from './github.service';
 
 @ApiTags('GitHub Integration')
 @Controller('github')
 export class GitHubController {
-  constructor(private readonly githubService: GitHubService) {}
+  constructor(
+    private readonly githubService: GitHubService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Post('token')
   @ApiOperation({ summary: 'Store GitHub access token for a user' })
@@ -130,6 +134,88 @@ export class GitHubController {
     return {
       success: true,
       revoked,
+    };
+  }
+
+  // Frontend Integration Endpoints
+
+  @Get('auth-url/:userId')
+  @ApiOperation({ summary: 'Get GitHub OAuth URL for frontend integration' })
+  @ApiParam({ name: 'userId', description: 'User ID to associate with GitHub account' })
+  @ApiQuery({ name: 'redirect', required: false, description: 'Frontend redirect URL after OAuth' })
+  @ApiResponse({ status: 200, description: 'OAuth URL generated successfully' })
+  async getAuthUrl(
+    @Param('userId') userId: string,
+    @Query('redirect') redirectUrl?: string,
+  ) {
+    if (!userId) {
+      throw new BadRequestException('userId is required');
+    }
+
+    const baseUrl = this.configService.get<string>('NODE_ENV') === 'production'
+      ? this.configService.get<string>('APP_URL', 'http://localhost:5001')
+      : 'http://localhost:5001';
+
+    const authUrl = new URL('/auth/github', baseUrl);
+    authUrl.searchParams.set('userId', userId);
+
+    if (redirectUrl) {
+      authUrl.searchParams.set('redirect', redirectUrl);
+    }
+
+    return {
+      success: true,
+      authUrl: authUrl.toString(),
+      userId,
+    };
+  }
+
+  @Get('status/:userId')
+  @ApiOperation({ summary: 'Check if user has connected GitHub account' })
+  @ApiParam({ name: 'userId', description: 'User ID' })
+  @ApiResponse({ status: 200, description: 'GitHub connection status retrieved' })
+  async getConnectionStatus(@Param('userId') userId: string) {
+    if (!userId) {
+      throw new BadRequestException('userId is required');
+    }
+
+    try {
+      const userInfo = await this.githubService.getUserInfo(userId);
+      const isValid = await this.githubService.validateToken(userId);
+
+      return {
+        success: true,
+        connected: isValid,
+        user: isValid ? {
+          username: userInfo.username,
+          email: userInfo.email,
+          name: userInfo.name,
+        } : null,
+      };
+    } catch (error) {
+      return {
+        success: true,
+        connected: false,
+        user: null,
+      };
+    }
+  }
+
+  @Post('disconnect/:userId')
+  @ApiOperation({ summary: 'Disconnect GitHub account for a user' })
+  @ApiParam({ name: 'userId', description: 'User ID' })
+  @ApiResponse({ status: 200, description: 'GitHub account disconnected successfully' })
+  async disconnectAccount(@Param('userId') userId: string) {
+    if (!userId) {
+      throw new BadRequestException('userId is required');
+    }
+
+    const revoked = await this.githubService.revokeToken(userId);
+
+    return {
+      success: true,
+      disconnected: revoked,
+      message: revoked ? 'GitHub account disconnected successfully' : 'No GitHub account was connected',
     };
   }
 }
