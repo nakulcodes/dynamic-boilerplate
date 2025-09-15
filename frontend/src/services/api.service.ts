@@ -53,4 +53,22 @@ export class ApiService {
       throw error;
     }
   }
+
+  static async downloadProject(downloadUrl: string, fileName: string): Promise<void> {
+    try {
+      // Create a temporary link to trigger download
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = fileName;
+      link.target = '_blank';
+
+      // Append to body, click, and remove
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Failed to download project:', error);
+      throw error;
+    }
+  }
 }

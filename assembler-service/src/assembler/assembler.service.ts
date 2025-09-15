@@ -54,10 +54,18 @@ export class AssemblerService {
 
         // Create output based on type
         if (generateDto.output.type === 'zip') {
-          const zipPath = await this.storageService.createZip(workDir, `${generateDto.projectName}.zip`);
+          const zipFileName = `${generateDto.projectName}.zip`;
+          await this.storageService.createZip(workDir, zipFileName);
+
+          // Create download URL
+          const baseUrl = this.configService.get<string>('BASE_URL', 'http://localhost:5001');
+          const downloadUrl = `${baseUrl}/api/download/${zipFileName}`;
+
           return {
             status: 'success',
-            outputUrl: zipPath,
+            outputUrl: downloadUrl,
+            downloadUrl: downloadUrl,
+            fileName: zipFileName,
             envRequired: result.envRequired,
           };
         }

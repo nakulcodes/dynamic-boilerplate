@@ -16,6 +16,8 @@ export interface ModuleMeta {
 export interface GenerationResult {
   status: 'success' | 'error';
   outputUrl?: string;
+  downloadUrl?: string;
+  fileName?: string;
   repoUrl?: string;
   envRequired?: string[];
   error?: string;

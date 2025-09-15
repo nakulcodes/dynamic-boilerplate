@@ -95,12 +95,17 @@ function App() {
     try {
       const result = await ApiService.generateProject(request);
 
-      if (result.status === 'success' && result.outputUrl) {
-        alert('Project generated successfully!');
-        console.log('Generated project URL:', result.outputUrl);
+      if (result.status === 'success') {
+        alert('Project generated successfully! Download will start automatically.');
+        console.log('Generated project result:', result);
 
-        // Trigger download
-        window.open(result.outputUrl, '_blank');
+        // Use the downloadUrl and fileName from the response
+        if (result.downloadUrl && result.fileName) {
+          await ApiService.downloadProject(result.downloadUrl, result.fileName);
+        } else if (result.outputUrl) {
+          // Fallback to old method if new fields not available
+          window.open(result.outputUrl, '_blank');
+        }
       } else if (result.status === 'error') {
         alert(result.error || 'Generation failed');
       }

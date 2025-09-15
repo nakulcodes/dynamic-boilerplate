@@ -32,6 +32,8 @@ export interface GenerateRequest {
 export interface GenerateResponse {
   status: 'success' | 'error' | 'queued';
   outputUrl?: string;
+  downloadUrl?: string;
+  fileName?: string;
   repoUrl?: string;
   envRequired?: string[];
   error?: string;

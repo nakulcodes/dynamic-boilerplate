@@ -1,5 +1,8 @@
-import { Controller, Post, Get, Body, HttpCode, HttpStatus, Param } from '@nestjs/common';
+import { Controller, Post, Get, Body, HttpCode, HttpStatus, Param, Res, NotFoundException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
+import { Response } from 'express';
+import * as path from 'path';
+import * as fs from 'fs-extra';
 import { AssemblerService } from './assembler.service';
 import { GenerateProjectDto } from '../common/dto/generate-project.dto';
 import { PresetsResponseDto } from '../common/dto/preset.dto';
@@ -54,4 +57,40 @@ export class AssemblerController {
   async generateProject(@Body() generateProjectDto: GenerateProjectDto) {
     return this.assemblerService.generateProject(generateProjectDto);
   }
+
+  @Get('download/:filename')
+  @ApiOperation({
+    summary: 'Download generated project',
+    description: 'Download a generated project ZIP file',
+  })
+  @ApiParam({
+    name: 'filename',
+    description: 'ZIP file name to download',
+    example: 'my-project.zip',
+  })
+  async downloadProject(@Param('filename') filename: string, @Res() res: Response) {
+    try {
+      // Construct the full file path
+      const outputDir = path.resolve(process.cwd(), 'tmp', 'output');
+      const filePath = path.join(outputDir, filename);
+
+      // Check if file exists
+      if (!await fs.pathExists(filePath)) {
+        throw new NotFoundException('File not found');
+      }
+
+      // Set appropriate headers
+      res.setHeader('Content-Type', 'application/zip');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+      // Send the file
+      res.sendFile(filePath);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new NotFoundException('File not found or cannot be accessed');
+    }
+  }
 }
+
