@@ -1,16 +1,25 @@
 {
   "name": "github-oauth",
   "description": "GitHub OAuth2 authentication integration",
+  "category": "authentication",
+  "required": false,
   "deps": {
     "passport-github2": "^0.1.12",
     "@nestjs/passport": "^10.0.0"
   },
   "devDeps": {},
   "env": [
-    "GITHUB_CLIENT_ID",
-    "GITHUB_CLIENT_SECRET",
-    "GITHUB_CALLBACK_URL"
+    { "key": "GITHUB_CLIENT_ID", "required": true, "example": "abcdef1234567890abcd" },
+    { "key": "GITHUB_CLIENT_SECRET", "required": true, "example": "abcdef1234567890abcdef1234567890abcdef12" },
+    { "key": "GITHUB_CALLBACK_URL", "required": true, "example": "http://localhost:3000/auth/github/callback" }
   ],
+  "routes": [
+    "/auth/github",
+    "/auth/github/callback"
+  ],
+  "dependsOn": ["config", "auth"],
+  "optionalDeps": [],
+  "qualityChecklist": ["unit-tests", "integration-tests", "README", "openapi"],
   "filesPath": "files",
   "conflicts": [],
   "inject": {

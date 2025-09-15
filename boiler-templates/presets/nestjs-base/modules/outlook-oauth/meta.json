@@ -1,16 +1,25 @@
 {
   "name": "outlook-oauth",
   "description": "Microsoft/Outlook OAuth2 authentication integration",
+  "category": "authentication",
+  "required": false,
   "deps": {
     "passport-microsoft": "^1.0.0",
     "@nestjs/passport": "^10.0.0"
   },
   "devDeps": {},
   "env": [
-    "MICROSOFT_CLIENT_ID",
-    "MICROSOFT_CLIENT_SECRET",
-    "MICROSOFT_CALLBACK_URL"
+    { "key": "MICROSOFT_CLIENT_ID", "required": true, "example": "12345678-1234-1234-1234-123456789012" },
+    { "key": "MICROSOFT_CLIENT_SECRET", "required": true, "example": "abcdef~1234567890abcdef1234567890" },
+    { "key": "MICROSOFT_CALLBACK_URL", "required": true, "example": "http://localhost:3000/auth/outlook/callback" }
   ],
+  "routes": [
+    "/auth/outlook",
+    "/auth/outlook/callback"
+  ],
+  "dependsOn": ["config", "auth"],
+  "optionalDeps": [],
+  "qualityChecklist": ["unit-tests", "integration-tests", "README", "openapi"],
   "filesPath": "files",
   "conflicts": [],
   "inject": {

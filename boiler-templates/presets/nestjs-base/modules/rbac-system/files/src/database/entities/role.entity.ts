@@ -7,7 +7,7 @@ import {
   OneToMany,
   Index,
 } from 'typeorm';
-import { User } from '@modules/user/entities/user.entity';
+import { User } from '@db/entities/user.entity';
 
 @Entity('roles')
 export class Role {

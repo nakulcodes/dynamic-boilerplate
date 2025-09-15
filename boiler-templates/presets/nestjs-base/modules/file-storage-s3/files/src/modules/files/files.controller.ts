@@ -15,6 +15,18 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { FilesService, FileUploadOptions, FileUploadResult, FileMetadata } from './files.service';
+import {
+  UploadFileDto,
+  UploadUrlDto,
+  DownloadUrlDto,
+  ValidateFileDto,
+  FileUploadResponseDto,
+  UploadUrlResponseDto,
+  DownloadUrlResponseDto,
+  FileMetadataResponseDto,
+  FileValidationResponseDto,
+  FileDeleteResponseDto,
+} from './dto';
 
 @ApiTags('files')
 @Controller('files')
@@ -52,16 +64,7 @@ export class FilesController {
   @ApiResponse({
     status: 201,
     description: 'File uploaded successfully',
-    schema: {
-      example: {
-        key: 'uploads/123e4567-e89b-12d3-a456-426614174000.jpg',
-        url: 'https://presigned-url.com',
-        publicUrl: 'https://bucket.s3.region.amazonaws.com/key',
-        bucket: 'my-bucket',
-        contentType: 'image/jpeg',
-        size: 1024000,
-      },
-    },
+    type: FileUploadResponseDto,
   })
   @ApiResponse({
     status: 400,
@@ -79,22 +82,36 @@ export class FilesController {
       }),
     )
     file: Express.Multer.File,
-    @Query('folder') folder?: string,
-    @Query('filename') filename?: string,
-    @Query('makePublic') makePublic?: string,
-  ): Promise<FileUploadResult> {
+    @Query() uploadDto: UploadFileDto,
+  ): Promise<FileUploadResponseDto> {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
 
     const options: FileUploadOptions = {
-      folder,
-      filename,
+      folder: uploadDto.folder,
+      filename: uploadDto.filename,
       contentType: file.mimetype,
-      makePublic: makePublic === 'true',
+      makePublic: uploadDto.makePublic || false,
     };
 
-    return this.filesService.uploadFile(file.buffer, file.originalname, options);
+    const result = await this.filesService.uploadFile(file.buffer, file.originalname, options);
+
+    return {
+      key: result.key,
+      url: result.url,
+      publicUrl: result.publicUrl,
+      bucket: result.bucket,
+      contentType: result.contentType,
+      size: result.size,
+      originalName: file.originalname,
+      uploadedAt: new Date().toISOString(),
+      etag: result.etag,
+      metadata: {
+        folder: uploadDto.folder,
+        makePublic: uploadDto.makePublic,
+      },
+    };
   }
 
   @Post('upload-url')
@@ -125,33 +142,31 @@ export class FilesController {
   @ApiResponse({
     status: 201,
     description: 'Presigned upload URL generated',
-    schema: {
-      example: {
-        uploadUrl: 'https://presigned-upload-url.com',
-        key: 'uploads/document.pdf',
-        expiresIn: 3600,
-      },
-    },
+    type: UploadUrlResponseDto,
   })
   async getUploadUrl(
-    @Query('key') key: string,
-    @Query('contentType') contentType: string,
-    @Query('expiresIn') expiresIn?: number,
-  ): Promise<{ uploadUrl: string; key: string; expiresIn: number }> {
-    if (!key || !contentType) {
+    @Query() uploadUrlDto: UploadUrlDto,
+  ): Promise<UploadUrlResponseDto> {
+    if (!uploadUrlDto.key || !uploadUrlDto.contentType) {
       throw new BadRequestException('Key and contentType are required');
     }
 
+    const expiresIn = uploadUrlDto.expiresIn || 3600;
     const uploadUrl = await this.filesService.getUploadUrl(
-      key,
-      contentType,
-      expiresIn || 3600,
+      uploadUrlDto.key,
+      uploadUrlDto.contentType,
+      expiresIn,
     );
+
+    const expiresAt = new Date(Date.now() + expiresIn * 1000).toISOString();
 
     return {
       uploadUrl,
-      key,
-      expiresIn: expiresIn || 3600,
+      key: uploadUrlDto.key,
+      expiresIn,
+      expiresAt,
+      instructions: 'Use PUT method to upload file directly to this URL',
+      maxFileSize: 10 * 1024 * 1024, // 10MB
     };
   }
 
@@ -160,13 +175,7 @@ export class FilesController {
   @ApiResponse({
     status: 200,
     description: 'Presigned download URL generated',
-    schema: {
-      example: {
-        url: 'https://presigned-download-url.com',
-        key: 'uploads/document.pdf',
-        expiresIn: 3600,
-      },
-    },
+    type: DownloadUrlResponseDto,
   })
   @ApiResponse({
     status: 404,
@@ -174,14 +183,20 @@ export class FilesController {
   })
   async getFileUrl(
     @Param('key') key: string,
-    @Query('expiresIn') expiresIn?: number,
-  ): Promise<{ url: string; key: string; expiresIn: number }> {
-    const url = await this.filesService.getSignedUrl(key, expiresIn || 3600);
+    @Query() downloadUrlDto: DownloadUrlDto,
+  ): Promise<DownloadUrlResponseDto> {
+    const expiresIn = downloadUrlDto.expiresIn || 3600;
+    const url = await this.filesService.getSignedUrl(key, expiresIn);
+    const expiresAt = new Date(Date.now() + expiresIn * 1000).toISOString();
+    const filename = key.split('/').pop() || 'download';
 
     return {
       url,
       key,
-      expiresIn: expiresIn || 3600,
+      expiresIn,
+      expiresAt,
+      exists: true, // The service would throw an error if file doesn't exist
+      filename,
     };
   }
 
@@ -190,25 +205,38 @@ export class FilesController {
   @ApiResponse({
     status: 200,
     description: 'File metadata retrieved',
-    schema: {
-      example: {
-        key: 'uploads/document.pdf',
-        bucket: 'my-bucket',
-        contentType: 'application/pdf',
-        size: 1024000,
-        lastModified: '2025-09-15T10:30:00.000Z',
-        etag: '"abc123def456"',
-        url: 'https://presigned-url.com',
-        publicUrl: 'https://bucket.s3.region.amazonaws.com/key',
-      },
-    },
+    type: FileMetadataResponseDto,
   })
   @ApiResponse({
     status: 404,
     description: 'File not found',
   })
-  async getFileMetadata(@Param('key') key: string): Promise<FileMetadata> {
-    return this.filesService.getFileMetadata(key);
+  async getFileMetadata(@Param('key') key: string): Promise<FileMetadataResponseDto> {
+    const metadata = await this.filesService.getFileMetadata(key);
+
+    const formatBytes = (bytes: number): string => {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    };
+
+    return {
+      key: metadata.key,
+      bucket: metadata.bucket,
+      contentType: metadata.contentType,
+      size: metadata.size,
+      lastModified: metadata.lastModified,
+      etag: metadata.etag,
+      url: metadata.url,
+      publicUrl: metadata.publicUrl,
+      storageClass: metadata.storageClass,
+      encryption: metadata.encryption,
+      metadata: metadata.metadata,
+      exists: true,
+      formattedSize: formatBytes(metadata.size),
+    };
   }
 
   @Delete(':key')
@@ -216,12 +244,7 @@ export class FilesController {
   @ApiResponse({
     status: 200,
     description: 'File deleted successfully',
-    schema: {
-      example: {
-        message: 'File deleted successfully',
-        key: 'uploads/document.pdf',
-      },
-    },
+    type: FileDeleteResponseDto,
   })
   @ApiResponse({
     status: 404,
@@ -229,12 +252,17 @@ export class FilesController {
   })
   async deleteFile(
     @Param('key') key: string,
-  ): Promise<{ message: string; key: string }> {
+  ): Promise<FileDeleteResponseDto> {
     await this.filesService.deleteFile(key);
 
     return {
       message: 'File deleted successfully',
       key,
+      success: true,
+      deletedAt: new Date().toISOString(),
+      metadata: {
+        permanent: true,
+      },
     };
   }
 
@@ -269,44 +297,63 @@ export class FilesController {
   @ApiResponse({
     status: 200,
     description: 'File validation result',
-    schema: {
-      example: {
-        valid: true,
-        errors: [],
-        contentType: 'application/pdf',
-      },
-    },
+    type: FileValidationResponseDto,
   })
   async validateFile(
-    @Query('filename') filename: string,
-    @Query('size') size: number,
-    @Query('allowedTypes') allowedTypes?: string,
-    @Query('maxSize') maxSize?: number,
-  ): Promise<{ valid: boolean; errors: string[]; contentType: string }> {
-    if (!filename || !size) {
+    @Query() validateDto: ValidateFileDto,
+  ): Promise<FileValidationResponseDto> {
+    if (!validateDto.filename || !validateDto.size) {
       throw new BadRequestException('Filename and size are required');
     }
 
     const errors: string[] = [];
-    const parsedAllowedTypes = allowedTypes ? allowedTypes.split(',') : undefined;
-    const parsedMaxSize = maxSize || 10 * 1024 * 1024; // 10MB default
+    const maxSize = validateDto.maxSize || 10 * 1024 * 1024; // 10MB default
+
+    const formatBytes = (bytes: number): string => {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    };
 
     // Validate file size
-    if (!this.filesService.validateFileSize(size, parsedMaxSize)) {
-      errors.push(`File size ${Math.round(size / 1024 / 1024)}MB exceeds maximum ${Math.round(parsedMaxSize / 1024 / 1024)}MB`);
+    const sizeValid = this.filesService.validateFileSize(validateDto.size, maxSize);
+    if (!sizeValid) {
+      errors.push(`File size ${formatBytes(validateDto.size)} exceeds maximum ${formatBytes(maxSize)}`);
     }
 
     // Validate file type
-    if (parsedAllowedTypes && !this.filesService.validateFileType(filename, parsedAllowedTypes)) {
-      errors.push(`File type not allowed. Allowed types: ${parsedAllowedTypes.join(', ')}`);
+    const typeValid = validateDto.allowedTypes ?
+      this.filesService.validateFileType(validateDto.filename, validateDto.allowedTypes) : true;
+    if (!typeValid) {
+      errors.push(`File type not allowed. Allowed types: ${validateDto.allowedTypes?.join(', ')}`);
     }
 
-    const contentType = this.filesService['getContentType'](filename);
+    const contentType = this.filesService['getContentType'](validateDto.filename);
+    const fileExtension = '.' + validateDto.filename.split('.').pop()?.toLowerCase();
 
     return {
       valid: errors.length === 0,
       errors,
       contentType,
+      fileExtension,
+      sizeValidation: {
+        size: validateDto.size,
+        formattedSize: formatBytes(validateDto.size),
+        maxAllowed: maxSize,
+        formattedMaxAllowed: formatBytes(maxSize),
+        valid: sizeValid,
+      },
+      typeValidation: {
+        detectedType: contentType,
+        allowedTypes: validateDto.allowedTypes,
+        valid: typeValid,
+      },
+      suggestedFilename: validateDto.filename,
+      metadata: {
+        validationId: `val_${Date.now()}`,
+      },
     };
   }
 }

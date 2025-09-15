@@ -1,0 +1,39 @@
+{
+  "name": "audit-log",
+  "description": "Immutable audit trail for sensitive events with @Audit() decorator and query endpoints",
+  "category": "security",
+  "required": false,
+  "deps": {
+    "rxjs": "^7.0.0"
+  },
+  "devDeps": {},
+  "env": [
+    { "key": "AUDIT_SINK", "required": false, "example": "database" },
+    { "key": "AUDIT_LOG_LEVEL", "required": false, "example": "all" },
+    { "key": "AUDIT_RETENTION_DAYS", "required": false, "example": "365" }
+  ],
+  "routes": [
+    "/audit/logs",
+    "/audit/logs/:id",
+    "/audit/correlation/:correlationId",
+    "/audit/session/:sessionId",
+    "/audit/critical",
+    "/audit/failed-attempts",
+    "/audit/statistics",
+    "/audit/export"
+  ],
+  "dependsOn": ["config", "database"],
+  "optionalDeps": [],
+  "qualityChecklist": ["unit-tests", "e2e-tests", "README", "openapi"],
+  "filesPath": "files",
+  "conflicts": [],
+  "inject": {
+    "src/app.module.ts": {
+      "import": ["import { AuditModule } from '@modules/audit/audit.module';"],
+      "register": ["AuditModule"]
+    }
+  },
+  "postInstall": [
+    "echo 'Audit module installed. Use @Audit() decorator to track sensitive events.'"
+  ]
+}

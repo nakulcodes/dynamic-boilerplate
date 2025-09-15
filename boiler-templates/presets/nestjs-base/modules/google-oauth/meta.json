@@ -1,6 +1,8 @@
 {
   "name": "google-oauth",
   "description": "Google OAuth2 authentication integration",
+  "category": "authentication",
+  "required": false,
   "deps": {
     "passport-google-oauth20": "^2.0.0",
     "@nestjs/passport": "^10.0.0",
@@ -8,10 +10,17 @@
   },
   "devDeps": {},
   "env": [
-    "GOOGLE_CLIENT_ID",
-    "GOOGLE_CLIENT_SECRET",
-    "GOOGLE_CALLBACK_URL"
+    { "key": "GOOGLE_CLIENT_ID", "required": true, "example": "123456789012-abcdefghijklmnopqrstuvwxyz123456.apps.googleusercontent.com" },
+    { "key": "GOOGLE_CLIENT_SECRET", "required": true, "example": "GOCSPX-abcdefghijklmnopqrstuvwxyz123456" },
+    { "key": "GOOGLE_CALLBACK_URL", "required": true, "example": "http://localhost:3000/auth/google/callback" }
   ],
+  "routes": [
+    "/auth/google",
+    "/auth/google/callback"
+  ],
+  "dependsOn": ["config", "auth"],
+  "optionalDeps": [],
+  "qualityChecklist": ["unit-tests", "integration-tests", "README", "openapi"],
   "filesPath": "files",
   "conflicts": [],
   "inject": {

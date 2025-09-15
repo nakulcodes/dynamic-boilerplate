@@ -1,0 +1,42 @@
+{
+  "name": "database",
+  "description": "TypeORM wrapper with connection manager, repository helpers, and migration runner",
+  "category": "core",
+  "required": false,
+  "deps": {
+    "typeorm": "^0.3.0",
+    "@nestjs/typeorm": "^10.0.0",
+    "pg": "^8.0.0"
+  },
+  "devDeps": {
+    "@types/pg": "^8.0.0"
+  },
+  "env": [
+    { "key": "DATABASE_URL", "required": false, "example": "postgres://user:pass@localhost:5432/db" },
+    { "key": "DB_TYPE", "required": false, "example": "postgres" },
+    { "key": "DB_HOST", "required": false, "example": "localhost" },
+    { "key": "DB_PORT", "required": false, "example": "5432" },
+    { "key": "DB_USERNAME", "required": false, "example": "postgres" },
+    { "key": "DB_PASSWORD", "required": false, "example": "password" },
+    { "key": "DB_DATABASE", "required": false, "example": "app_db" },
+    { "key": "DB_SYNCHRONIZE", "required": false, "example": "false" },
+    { "key": "DB_LOGGING", "required": false, "example": "false" },
+    { "key": "DB_SSL", "required": false, "example": "false" },
+    { "key": "MIGRATION_STRATEGY", "required": false, "example": "manual" }
+  ],
+  "routes": [],
+  "dependsOn": ["config"],
+  "optionalDeps": [],
+  "qualityChecklist": ["unit-tests", "migration-tests", "README"],
+  "filesPath": "files",
+  "conflicts": [],
+  "inject": {
+    "src/app.module.ts": {
+      "import": ["import { DatabaseModule } from '@modules/database/database.module';"],
+      "register": ["DatabaseModule"]
+    }
+  },
+  "postInstall": [
+    "echo 'Database module installed. Run migrations with: npm run migration:run'"
+  ]
+}

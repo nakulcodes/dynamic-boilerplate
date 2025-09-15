@@ -1,16 +1,27 @@
 {
   "name": "notifications-twilio",
   "description": "Twilio integration for SMS, WhatsApp messages, and voice calls",
+  "category": "communication",
+  "required": false,
   "deps": {
     "twilio": "^4.0.0"
   },
   "devDeps": {},
   "env": [
-    "TWILIO_ACCOUNT_SID",
-    "TWILIO_AUTH_TOKEN",
-    "TWILIO_PHONE_NUMBER",
-    "TWILIO_WHATSAPP_NUMBER"
+    { "key": "TWILIO_ACCOUNT_SID", "required": true, "example": "" },
+    { "key": "TWILIO_AUTH_TOKEN", "required": true, "example": "" },
+    { "key": "TWILIO_PHONE_NUMBER", "required": true, "example": "" },
+    { "key": "TWILIO_WHATSAPP_NUMBER", "required": false, "example": "" }
   ],
+  "routes": [
+    "/notifications/sms",
+    "/notifications/whatsapp",
+    "/notifications/voice",
+    "/notifications/status/:id"
+  ],
+  "dependsOn": ["config"],
+  "optionalDeps": [],
+  "qualityChecklist": ["unit-tests", "integration-tests", "README", "openapi"],
   "filesPath": "files",
   "conflicts": [],
   "inject": {

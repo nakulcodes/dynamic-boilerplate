@@ -1,6 +1,8 @@
 {
   "name": "cache-memory",
-  "description": "In-memory caching service using node-cache for improved application performance",
+  "description": "In-memory caching service using node-cache for improved application performance in single-instance deployments",
+  "category": "cache",
+  "required": false,
   "deps": {
     "node-cache": "^5.1.2"
   },
@@ -8,11 +10,15 @@
     "@types/node-cache": "^4.2.5"
   },
   "env": [
-    "CACHE_TTL",
-    "CACHE_CHECK_PERIOD",
-    "CACHE_MAX_KEYS",
-    "CACHE_USE_CLONES"
+    { "key": "CACHE_TTL", "required": false, "example": "3600" },
+    { "key": "CACHE_CHECK_PERIOD", "required": false, "example": "600" },
+    { "key": "CACHE_MAX_KEYS", "required": false, "example": "10000" },
+    { "key": "CACHE_USE_CLONES", "required": false, "example": "false" }
   ],
+  "routes": [],
+  "dependsOn": ["config"],
+  "optionalDeps": [],
+  "qualityChecklist": ["unit-tests", "performance-tests", "README"],
   "filesPath": "files",
   "conflicts": ["cache-redis"],
   "inject": {

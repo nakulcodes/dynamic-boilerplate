@@ -4,7 +4,7 @@ import {
   getAllPermissions,
   getPermissionsByResource,
   parsePermission,
-} from '@common/rbac/permissions';
+} from '../../common/rbac/permissions';
 
 @Injectable()
 export class PermissionService {
