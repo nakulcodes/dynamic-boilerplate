@@ -1,20 +1,20 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { PresetSelector } from './components/PresetSelector';
-import { ModuleSelector } from './components/ModuleSelector';
-import { ProjectConfig } from './components/ProjectConfig';
-import { FileTreePreview } from './components/FileTreePreview';
-import { GenerateButton } from './components/GenerateButton';
-import { ApiService } from './services/api.service';
-import type { PresetInfo, GenerateRequest } from './types';
-import { Loader2 } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { PresetSelector } from "./components/PresetSelector";
+import { ModuleSelector } from "./components/ModuleSelector";
+import { ProjectConfig } from "./components/ProjectConfig";
+import { FileTreePreview } from "./components/FileTreePreview";
+import { GenerateButton } from "./components/GenerateButton";
+import { ApiService } from "./services/api.service";
+import type { PresetInfo, GenerateRequest } from "./types";
+import { Loader2 } from "lucide-react";
 
 function App() {
   const [presets, setPresets] = useState<PresetInfo[]>([]);
-  const [selectedPreset, setSelectedPreset] = useState<string>('');
+  const [selectedPreset, setSelectedPreset] = useState<string>("");
   const [selectedModules, setSelectedModules] = useState<string[]>([]);
-  const [projectName, setProjectName] = useState<string>('');
-  const [author, setAuthor] = useState<string>('');
+  const [projectName, setProjectName] = useState<string>("");
+  const [author, setAuthor] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const [envRequired, setEnvRequired] = useState<string[]>([]);
 
@@ -25,31 +25,31 @@ function App() {
   useEffect(() => {
     if (selectedPreset) {
       // Calculate required environment variables based on selected modules
-      const preset = presets.find(p => p.name === selectedPreset);
+      const preset = presets.find((p) => p.name === selectedPreset);
       if (preset) {
         const requiredEnvs = new Set<string>();
 
-        selectedModules.forEach(moduleName => {
+        selectedModules.forEach((moduleName) => {
           // In a real implementation, you'd have env requirements in the module metadata
-          if (moduleName === 'google-oauth') {
-            requiredEnvs.add('GOOGLE_CLIENT_ID');
-            requiredEnvs.add('GOOGLE_CLIENT_SECRET');
-            requiredEnvs.add('GOOGLE_CALLBACK_URL');
+          if (moduleName === "google-oauth") {
+            requiredEnvs.add("GOOGLE_CLIENT_ID");
+            requiredEnvs.add("GOOGLE_CLIENT_SECRET");
+            requiredEnvs.add("GOOGLE_CALLBACK_URL");
           }
-          if (moduleName === 'google-calendar') {
-            requiredEnvs.add('GOOGLE_CLIENT_ID');
-            requiredEnvs.add('GOOGLE_CLIENT_SECRET');
+          if (moduleName === "google-calendar") {
+            requiredEnvs.add("GOOGLE_CLIENT_ID");
+            requiredEnvs.add("GOOGLE_CLIENT_SECRET");
           }
-          if (moduleName === 'enhanced-logging') {
-            requiredEnvs.add('ELASTICSEARCH_URL');
-            requiredEnvs.add('METRICS_ENABLED');
-            requiredEnvs.add('METRICS_PORT');
+          if (moduleName === "enhanced-logging") {
+            requiredEnvs.add("ELASTICSEARCH_URL");
+            requiredEnvs.add("METRICS_ENABLED");
+            requiredEnvs.add("METRICS_PORT");
           }
         });
 
         // Add base requirements
-        requiredEnvs.add('DATABASE_URL');
-        requiredEnvs.add('JWT_SECRET');
+        requiredEnvs.add("DATABASE_URL");
+        requiredEnvs.add("JWT_SECRET");
 
         setEnvRequired(Array.from(requiredEnvs));
       }
@@ -64,8 +64,8 @@ function App() {
         setSelectedPreset(presetsData[0].name);
       }
     } catch (error) {
-      alert('Failed to load presets');
-      console.error('Failed to load presets:', error);
+      alert("Failed to load presets");
+      console.error("Failed to load presets:", error);
     } finally {
       setLoading(false);
     }
@@ -73,22 +73,25 @@ function App() {
 
   const handleGenerate = async () => {
     if (!projectName.trim()) {
-      alert('Please enter a project name');
+      alert("Please enter a project name");
       return;
     }
 
     if (!selectedPreset) {
-      alert('Please select a preset');
+      alert("Please select a preset");
       return;
     }
 
     const request: GenerateRequest = {
       preset: selectedPreset,
       modules: selectedModules,
-      projectName: projectName.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-'),
+      projectName: projectName
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9-]/g, "-"),
       author: author.trim(),
       output: {
-        type: 'zip',
+        type: "zip",
       },
     };
 
@@ -110,12 +113,12 @@ function App() {
         alert(result.error || 'Generation failed');
       }
     } catch (error) {
-      alert('Failed to generate project');
-      console.error('Generation error:', error);
+      alert("Failed to generate project");
+      console.error("Generation error:", error);
     }
   };
 
-  const currentPreset = presets.find(p => p.name === selectedPreset);
+  const currentPreset = presets.find((p) => p.name === selectedPreset);
   const canGenerate = projectName.trim() && selectedPreset;
 
   if (loading) {
@@ -165,14 +168,15 @@ function App() {
             </div>
 
             <h1 className="text-5xl md:text-6xl font-bold text-zinc-50 mb-6 tracking-tight">
-              Dynamic Boilerplate{' '}
+              Dynamic Boilerplate{" "}
               <span className="bg-gradient-to-r from-white to-zinc-300 bg-clip-text text-transparent">
                 Generator
               </span>
             </h1>
 
             <p className="text-xl text-zinc-400 max-w-3xl mx-auto leading-relaxed">
-              Generate production-ready repositories from base presets and feature modules.
+              Generate production-ready repositories from base presets and
+              feature modules.
               <br />
               Select your stack, choose your modules, and ship faster.
             </p>
