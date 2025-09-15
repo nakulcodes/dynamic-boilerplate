@@ -1,0 +1,14 @@
+[providers]
+node = "18"
+
+[variables]
+NODE_ENV = "production"
+
+[phases.build]
+cmd = "npm ci && npm run build"
+
+[phases.start]
+cmd = "npx serve -s dist -l 8080"
+
+[phases.setup]
+nixPkgs = ["nodejs_18", "nginx"]
