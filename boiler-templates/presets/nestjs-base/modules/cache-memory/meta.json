@@ -1,0 +1,25 @@
+{
+  "name": "cache-memory",
+  "description": "In-memory caching service using node-cache for improved application performance",
+  "deps": {
+    "node-cache": "^5.1.2"
+  },
+  "devDeps": {
+    "@types/node-cache": "^4.2.5"
+  },
+  "env": [
+    "CACHE_TTL",
+    "CACHE_CHECK_PERIOD",
+    "CACHE_MAX_KEYS",
+    "CACHE_USE_CLONES"
+  ],
+  "filesPath": "files",
+  "conflicts": ["cache-redis"],
+  "inject": {
+    "src/app.module.ts": {
+      "import": ["import { CacheModule } from '@modules/cache/cache.module';"],
+      "register": ["CacheModule"]
+    }
+  },
+  "postInstall": []
+}
