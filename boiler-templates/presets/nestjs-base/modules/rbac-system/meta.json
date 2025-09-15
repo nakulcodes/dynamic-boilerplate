@@ -1,9 +1,14 @@
 {
   "name": "rbac-system",
   "description": "Complete Role-Based Access Control (RBAC) system with permissions, roles, guards, and decorators",
+  "category": "security",
+  "required": false,
   "deps": {
     "@nestjs/passport": "^10.0.0",
     "@nestjs/jwt": "^10.0.0",
+    "@nestjs/swagger": "^7.0.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.0",
     "passport": "^0.6.0",
     "passport-jwt": "^4.0.1",
     "bcrypt": "^5.1.0"
@@ -13,14 +18,97 @@
     "@types/passport-jwt": "^3.0.9"
   },
   "env": [
-    "RBAC_SUPER_ADMIN_EMAIL",
-    "RBAC_SUPER_ADMIN_PASSWORD",
-    "RBAC_DEFAULT_ROLE"
+    {
+      "key": "RBAC_SUPER_ADMIN_EMAIL",
+      "required": true,
+      "example": "admin@yourapp.com"
+    },
+    {
+      "key": "RBAC_SUPER_ADMIN_PASSWORD",
+      "required": true,
+      "example": "SecurePassword123!"
+    },
+    {
+      "key": "RBAC_DEFAULT_ROLE",
+      "required": false,
+      "example": "viewer"
+    }
+  ],
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/api/roles",
+      "description": "Get all roles with pagination"
+    },
+    {
+      "method": "POST",
+      "path": "/api/roles",
+      "description": "Create a new role"
+    },
+    {
+      "method": "GET",
+      "path": "/api/roles/:id",
+      "description": "Get role by ID"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/roles/:id",
+      "description": "Update role"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/roles/:id",
+      "description": "Delete role (soft delete)"
+    },
+    {
+      "method": "GET",
+      "path": "/api/roles/permissions",
+      "description": "Get all available permissions"
+    },
+    {
+      "method": "GET",
+      "path": "/api/roles/system",
+      "description": "Get system roles"
+    },
+    {
+      "method": "POST",
+      "path": "/api/roles/:id/permissions",
+      "description": "Assign permissions to role"
+    },
+    {
+      "method": "POST",
+      "path": "/api/roles/:id/permissions/:permission",
+      "description": "Add specific permission to role"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/roles/:id/permissions/:permission",
+      "description": "Remove specific permission from role"
+    },
+    {
+      "method": "GET",
+      "path": "/api/permissions",
+      "description": "Get all permissions with details"
+    },
+    {
+      "method": "GET",
+      "path": "/api/permissions/grouped",
+      "description": "Get permissions grouped by resource"
+    },
+    {
+      "method": "GET",
+      "path": "/api/permissions/search",
+      "description": "Search permissions by keyword"
+    }
+  ],
+  "dependsOn": [
+    "auth-system",
+    "database"
   ],
   "filesPath": "files",
   "conflicts": [],
   "inject": {
-    "src/app.module.ts": {
+    "src/modules/auth/auth.module.ts": {
       "import": [
         "import { RoleModule } from '@modules/role/role.module';",
         "import { PermissionModule } from '@modules/permission/permission.module';",
@@ -45,17 +133,30 @@
     "Complete RBAC implementation with roles and permissions",
     "Flexible permission system (resource:action format)",
     "Role hierarchy with priority levels",
-    "Decorators for easy permission/role checking",
-    "Global RBAC guard for automatic protection",
-    "Database entities for roles and permissions",
-    "Seed data for default roles and permissions",
+    "Decorators for easy permission/role checking (@RequirePermissions, @RequireAdmin)",
+    "Global RBAC guard for automatic route protection",
+    "Custom repository pattern for database operations",
+    "Organized DTO structure (request/response)",
+    "Database entities with proper relationships",
+    "Comprehensive seed data for default roles and permissions",
     "Support for both ALL and ANY permission requirements",
-    "TypeScript interfaces for type safety",
-    "Extensible permission and role definitions"
+    "TypeScript interfaces for complete type safety",
+    "Extensible permission and role definitions",
+    "Soft delete functionality for roles",
+    "System role protection (cannot be modified/deleted)",
+    "User role assignment and management",
+    "Permission validation and management",
+    "RESTful API endpoints for role and permission management",
+    "Swagger documentation for all endpoints",
+    "Pagination support for role listings",
+    "Permission searching and grouping capabilities"
   ],
   "requirements": [
-    "TypeORM must be configured",
-    "Authentication module must be present",
-    "User entity must exist with role relationship"
+    "TypeORM must be configured with DataSource",
+    "Authentication module (auth-system) must be present",
+    "User entity must exist with role relationship",
+    "Path aliases (@db/*, @common/*, @modules/*) must be configured",
+    "JWT authentication must be set up",
+    "Database must support JSON/JSONB for permissions storage"
   ]
 }

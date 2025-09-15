@@ -1,6 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-export class PaginationMetaDto {
+// Import new standardized DTOs
+export * from './response/api-response.dto';
+
+/**
+ * @deprecated Use PaginationMetaDto from api-response.dto.ts instead
+ * Legacy class kept for backward compatibility
+ */
+export class LegacyPaginationMetaDto {
   @ApiProperty({
     description: 'Current page number',
     example: 1,
@@ -38,6 +45,10 @@ export class PaginationMetaDto {
   readonly hasPrevious: boolean;
 }
 
+/**
+ * @deprecated Use ApiResponseDto from api-response.dto.ts instead
+ * Legacy class kept for backward compatibility
+ */
 export class BaseResponseDto<T = any> {
   @ApiProperty({
     description: 'Indicates if the request was successful',
@@ -68,12 +79,16 @@ export class BaseResponseDto<T = any> {
   readonly error?: any;
 }
 
-export class PaginatedResponseDto<T = any> extends BaseResponseDto<T[]> {
+/**
+ * @deprecated Use PaginatedResponseDto from api-response.dto.ts instead
+ * Legacy class kept for backward compatibility
+ */
+export class LegacyPaginatedResponseDto<T = any> extends BaseResponseDto<T[]> {
   @ApiProperty({
     description: 'Pagination metadata',
-    type: PaginationMetaDto,
+    type: LegacyPaginationMetaDto,
   })
-  readonly pagination: PaginationMetaDto;
+  readonly pagination: LegacyPaginationMetaDto;
 
   @ApiProperty({
     description: 'List of items',
@@ -82,6 +97,9 @@ export class PaginatedResponseDto<T = any> extends BaseResponseDto<T[]> {
   readonly data: T[];
 }
 
+/**
+ * Error response DTO - unchanged as errors don't follow payload/meta format
+ */
 export class ErrorResponseDto {
   @ApiProperty({
     description: 'Indicates the request failed',
@@ -119,3 +137,11 @@ export class ErrorResponseDto {
   })
   readonly path: string;
 }
+
+// Re-export new standardized names for easy migration
+export {
+  PaginationMetaDto,
+  ApiResponseDto as StandardResponseDto,
+  PaginatedResponseDto as StandardPaginatedResponseDto,
+  ResponseFactory
+} from './response/api-response.dto';

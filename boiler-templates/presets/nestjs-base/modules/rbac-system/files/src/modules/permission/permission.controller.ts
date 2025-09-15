@@ -1,10 +1,10 @@
 import { Controller, Get, Query, UseGuards, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { PermissionService } from './permission.service';
-import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
-import { RbacGuard } from '@common/guards/rbac.guard';
-import { RequirePermissions } from '@common/decorators/permissions.decorator';
-import { PERMISSIONS } from '@common/rbac/permissions';
+import { JwtAuthGuard } from '../../../../../modules/auth/guards/jwt-auth.guard';
+import { RbacGuard } from '../../common/guards/rbac.guard';
+import { RequirePermissions } from '../../common/decorators/permissions.decorator';
+import { PERMISSIONS } from '../../common/rbac/permissions';
 
 @ApiTags('Permissions')
 @ApiBearerAuth()

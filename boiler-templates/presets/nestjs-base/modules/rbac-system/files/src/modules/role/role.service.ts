@@ -4,25 +4,23 @@ import {
   ConflictException,
   BadRequestException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Role } from './entities/role.entity';
-import { CreateRoleDto } from './dto/create-role.dto';
-import { UpdateRoleDto } from './dto/update-role.dto';
-import { isValidPermission, getAllPermissions } from '@common/rbac/permissions';
+import { Role } from '../../database/entities/role.entity';
+import { RoleRepository } from '../../database/repositories/role.repository';
+import { CreateRoleDto } from './dto/request/create-role.dto';
+import { UpdateRoleDto } from './dto/request/update-role.dto';
+import { isValidPermission, getAllPermissions } from '../../common/rbac/permissions';
 
 @Injectable()
 export class RoleService {
   constructor(
-    @InjectRepository(Role)
-    private readonly roleRepository: Repository<Role>,
+    private readonly roleRepository: RoleRepository,
   ) {}
 
   async create(createRoleDto: CreateRoleDto): Promise<Role> {
     const { name, permissions } = createRoleDto;
 
     // Check if role already exists
-    const existingRole = await this.roleRepository.findOne({ where: { name } });
+    const existingRole = await this.roleRepository.findByName(name);
     if (existingRole) {
       throw new ConflictException(`Role with name '${name}' already exists`);
     }
@@ -36,29 +34,17 @@ export class RoleService {
     }
 
     // Create role
-    const role = this.roleRepository.create({
-      ...createRoleDto,
-      isSystem: false,
-    });
-
-    return this.roleRepository.save(role);
+    return this.roleRepository.createRole(createRoleDto);
   }
 
   async findAll(
     page: number = 1,
     limit: number = 10,
   ): Promise<{ items: Role[]; total: number; page: number; totalPages: number }> {
-    const skip = (page - 1) * limit;
-
-    const [roles, total] = await this.roleRepository.findAndCount({
-      skip,
-      take: limit,
-      order: { priority: 'DESC', createdAt: 'DESC' },
-      where: { deletedAt: null },
-    });
+    const { items, total } = await this.roleRepository.findWithPagination(page, limit);
 
     return {
-      items: roles,
+      items,
       total,
       page,
       totalPages: Math.ceil(total / limit),
@@ -66,10 +52,7 @@ export class RoleService {
   }
 
   async findOne(id: string): Promise<Role> {
-    const role = await this.roleRepository.findOne({
-      where: { id, deletedAt: null },
-      relations: ['users'],
-    });
+    const role = await this.roleRepository.findById(id);
 
     if (!role) {
       throw new NotFoundException(`Role with ID '${id}' not found`);
@@ -79,9 +62,7 @@ export class RoleService {
   }
 
   async findByName(name: string): Promise<Role | null> {
-    return this.roleRepository.findOne({
-      where: { name, deletedAt: null },
-    });
+    return this.roleRepository.findByName(name);
   }
 
   async update(id: string, updateRoleDto: UpdateRoleDto): Promise<Role> {
@@ -113,8 +94,12 @@ export class RoleService {
     }
 
     // Update role
-    Object.assign(role, updateRoleDto);
-    return this.roleRepository.save(role);
+    const updatedRole = await this.roleRepository.updateRole(id, updateRoleDto);
+    if (!updatedRole) {
+      throw new NotFoundException(`Role with ID '${id}' not found`);
+    }
+
+    return updatedRole;
   }
 
   async remove(id: string): Promise<{ message: string }> {
@@ -126,7 +111,7 @@ export class RoleService {
     }
 
     // Check if role is in use
-    const usersCount = role.users?.length || 0;
+    const usersCount = await this.roleRepository.getUsersCount(id);
     if (usersCount > 0) {
       throw new BadRequestException(
         `Cannot delete role that is assigned to ${usersCount} user(s)`,
@@ -134,8 +119,10 @@ export class RoleService {
     }
 
     // Soft delete
-    role.deletedAt = new Date();
-    await this.roleRepository.save(role);
+    const deleted = await this.roleRepository.softDeleteRole(id);
+    if (!deleted) {
+      throw new NotFoundException(`Role with ID '${id}' not found`);
+    }
 
     return { message: 'Role deleted successfully' };
   }
@@ -145,10 +132,7 @@ export class RoleService {
   }
 
   async getSystemRoles(): Promise<Role[]> {
-    return this.roleRepository.find({
-      where: { isSystem: true, deletedAt: null },
-      order: { priority: 'DESC' },
-    });
+    return this.roleRepository.findSystemRoles();
   }
 
   async assignPermissions(roleId: string, permissions: string[]): Promise<Role> {
@@ -166,8 +150,12 @@ export class RoleService {
       );
     }
 
-    role.permissions = permissions;
-    return this.roleRepository.save(role);
+    const updatedRole = await this.roleRepository.updateRole(roleId, { permissions });
+    if (!updatedRole) {
+      throw new NotFoundException(`Role with ID '${roleId}' not found`);
+    }
+
+    return updatedRole;
   }
 
   async addPermission(roleId: string, permission: string): Promise<Role> {
@@ -182,8 +170,12 @@ export class RoleService {
     }
 
     if (!role.permissions.includes(permission)) {
-      role.permissions.push(permission);
-      await this.roleRepository.save(role);
+      const updatedPermissions = [...role.permissions, permission];
+      const updatedRole = await this.roleRepository.updateRole(roleId, { permissions: updatedPermissions });
+      if (!updatedRole) {
+        throw new NotFoundException(`Role with ID '${roleId}' not found`);
+      }
+      return updatedRole;
     }
 
     return role;
@@ -196,7 +188,12 @@ export class RoleService {
       throw new BadRequestException('Cannot modify permissions for system roles');
     }
 
-    role.permissions = role.permissions.filter(p => p !== permission);
-    return this.roleRepository.save(role);
+    const updatedPermissions = role.permissions.filter(p => p !== permission);
+    const updatedRole = await this.roleRepository.updateRole(roleId, { permissions: updatedPermissions });
+    if (!updatedRole) {
+      throw new NotFoundException(`Role with ID '${roleId}' not found`);
+    }
+
+    return updatedRole;
   }
 }

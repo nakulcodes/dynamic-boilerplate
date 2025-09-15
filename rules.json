@@ -418,9 +418,119 @@
         "purpose": "Categorized template for all required environment variables",
         "instructions": "Copy to .env and fill in values"
       }
+    },
+    "api_response_standards": {
+      "description": "Standardized API response format for all endpoints",
+      "standard_format": {
+        "rule": "All API responses MUST follow the standardized payload/meta structure",
+        "structure": {
+          "payload": "any | any[] - The actual response data (object for single items, array for lists)",
+          "meta": {
+            "page": "number - Current page number (for paginated responses)",
+            "limit": "number - Number of items per page (for paginated responses)",
+            "total": "number - Total number of items (for paginated responses)"
+          }
+        },
+        "response_types": {
+          "single_item": {
+            "format": "{ payload: T, meta?: { [key: string]: any } }",
+            "example": "{ payload: { id: 1, name: 'User' }, meta: { timestamp: '2025-09-16T10:00:00Z' } }"
+          },
+          "paginated_list": {
+            "format": "{ payload: T[], meta: { page: number, limit: number, total: number } }",
+            "example": "{ payload: [{id: 1}, {id: 2}], meta: { page: 1, limit: 50, total: 100 } }"
+          },
+          "empty_list": {
+            "format": "{ payload: [], meta: { page: number, limit: number, total: 0 } }",
+            "example": "{ payload: [], meta: { page: 1, limit: 50, total: 0 } }"
+          }
+        }
+      },
+      "base_interfaces": {
+        "rule": "Use generic TypeScript interfaces for type safety and reusability",
+        "required_interfaces": {
+          "ApiResponse<T>": "Generic interface for single item responses",
+          "PaginatedApiResponse<T>": "Generic interface for paginated list responses",
+          "MetaData": "Interface for pagination metadata",
+          "ApiResponseDto<T>": "Base DTO class for single responses",
+          "PaginatedResponseDto<T>": "Base DTO class for paginated responses"
+        },
+        "location": "src/common/dto/response/ and src/common/interfaces/"
+      },
+      "implementation_rules": {
+        "dto_inheritance": {
+          "rule": "All response DTOs MUST extend base response DTOs",
+          "pattern": "export class EntityResponseDto extends ApiResponseDto<EntityDto> {}",
+          "paginated_pattern": "export class PaginatedEntityResponseDto extends PaginatedResponseDto<EntityDto> {}"
+        },
+        "controller_responses": {
+          "rule": "Controllers MUST return responses in the standardized format",
+          "single_item_method": "return { payload: entity, meta: { timestamp: new Date().toISOString() } };",
+          "paginated_method": "return { payload: entities, meta: { page, limit, total } };"
+        },
+        "swagger_documentation": {
+          "rule": "All response DTOs MUST include proper Swagger/OpenAPI documentation",
+          "decorators": [
+            "@ApiResponse({ status: 200, type: EntityResponseDto })",
+            "@ApiResponse({ status: 200, type: PaginatedEntityResponseDto })"
+          ]
+        }
+      },
+      "error_handling": {
+        "rule": "Error responses SHOULD follow HTTP status codes but MAY use different format for errors",
+        "error_format": {
+          "structure": "Standard NestJS exception structure with message, statusCode, timestamp",
+          "rationale": "Errors don't need payload/meta format as they represent failures, not data"
+        }
+      },
+      "backward_compatibility": {
+        "rule": "Migration strategy for existing endpoints",
+        "approach": "Gradual migration with version support",
+        "steps": [
+          "Create new base DTOs with payload/meta format",
+          "Update response DTOs to extend new base classes",
+          "Update controllers to return new format",
+          "Update documentation and examples",
+          "Remove old format after migration"
+        ]
+      },
+      "validation_checklist": [
+        "✅ All response DTOs extend ApiResponseDto or PaginatedResponseDto",
+        "✅ Controllers return { payload, meta } structure",
+        "✅ Swagger documentation reflects new format",
+        "✅ TypeScript generics used for type safety",
+        "✅ Pagination metadata includes page, limit, total",
+        "✅ Single items use payload field for data",
+        "✅ Lists use payload array for items"
+      ]
     }
   },
   "examples": {
+    "standardized_response_implementation": {
+      "description": "Examples of implementing the new standardized response format",
+      "single_item_response": {
+        "file": "src/modules/users/users.controller.ts",
+        "method": "findOne",
+        "implementation": "@Get(':id')\n@ApiResponse({ status: 200, type: UserResponseDto })\nasync findOne(@Param('id') id: string): Promise<UserResponseDto> {\n  const user = await this.usersService.findOne(id);\n  return new UserResponseDto(user);\n}",
+        "response_format": "{ payload: UserDto, meta: { timestamp: '2025-09-16T10:00:00.000Z' } }"
+      },
+      "paginated_response": {
+        "file": "src/modules/users/users.controller.ts",
+        "method": "findAll",
+        "implementation": "@Get()\n@ApiResponse({ status: 200, type: PaginatedUsersResponseDto })\nasync findAll(@Query() paginationDto: PaginationDto): Promise<PaginatedUsersResponseDto> {\n  const { page = 1, limit = 50 } = paginationDto;\n  const { users, total } = await this.usersService.findAll(page, limit);\n  return new PaginatedUsersResponseDto(users, page, limit, total);\n}",
+        "response_format": "{ payload: UserDto[], meta: { page: 1, limit: 50, total: 100, totalPages: 2, hasNext: true, hasPrevious: false } }"
+      },
+      "using_response_factory": {
+        "description": "Using ResponseFactory for quick response creation",
+        "success_response": "ResponseFactory.success(data, { timestamp: new Date().toISOString() })",
+        "paginated_response": "ResponseFactory.paginated(items, page, limit, total)",
+        "empty_paginated": "ResponseFactory.emptyPaginated(1, 50)"
+      },
+      "custom_response_dto": {
+        "description": "Creating custom response DTOs that extend base classes",
+        "code": "export class UserResponseDto extends ApiResponseDto<UserDto> {\n  @ApiProperty({ type: UserDto })\n  payload: UserDto;\n\n  @ApiProperty({ type: ResponseMetaDto })\n  meta?: ResponseMetaDto;\n\n  constructor(user: UserDto, meta?: Record<string, any>) {\n    super(user, meta || new ResponseMetaDto());\n  }\n}"
+      }
+    },
     "repository_implementation": {
       "file": "src/database/repositories/user.repository.ts",
       "code": "import { Repository, DataSource } from 'typeorm';\nimport { Injectable } from '@nestjs/common';\nimport { User } from '../entities/user.entity';\n\n@Injectable()\nexport class UserRepository extends Repository<User> {\n  constructor(private readonly dataSource: DataSource) {\n    super(User, dataSource.createEntityManager());\n  }\n\n  async findAll(): Promise<User[]> {\n    return this.find();\n  }\n\n  async findById(id: number): Promise<User | null> {\n    return this.findOne({ where: { id } });\n  }\n\n  async createUser(userData: Partial<User>): Promise<User> {\n    const user = this.create(userData);\n    return this.save(user);\n  }\n}"

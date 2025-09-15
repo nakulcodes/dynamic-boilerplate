@@ -1,8 +1,8 @@
 import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { Role } from '@modules/role/entities/role.entity';
-import { User } from '@modules/user/entities/user.entity';
-import { ROLES, getAllRoles } from '@common/rbac/roles';
+import { Role } from '../../database/entities/role.entity';
+import { User } from '../../../../../../../database/entities/user.entity';
+import { ROLES, getAllRoles } from '../../common/rbac/roles';
 
 /**
  * Seed RBAC roles and permissions

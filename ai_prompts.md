@@ -79,3 +79,5 @@ Use this template inside each module folder to standardize UI/CLI generation.
   "optionalDeps": ["rate-limit", "audit-log"],
   "qualityChecklist": ["openapi", "unit-tests", "e2e-tests", "README"]
 }
+
+1. As per respoinse stated generate a create a response intercetpro to modify response in a  specified format given in fules json. 
