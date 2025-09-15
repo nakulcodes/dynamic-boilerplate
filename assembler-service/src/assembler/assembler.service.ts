@@ -169,6 +169,9 @@ export class AssemblerService {
     // Write updated package.json
     await fs.writeJson(packagePath, packageJson, { spaces: 2 });
 
+    // Generate .env.template file
+    await this.generateEnvTemplate(workDir, Array.from(envSet));
+
     // Write project metadata
     const projectMeta = {
       generatedAt: new Date().toISOString(),
@@ -241,6 +244,137 @@ export class AssemblerService {
         await fs.writeFile(filePath, content, 'utf8');
       }
     }
+  }
+
+  private async generateEnvTemplate(workDir: string, envVars: string[]): Promise<void> {
+    if (envVars.length === 0) return;
+
+    const envTemplateContent = [
+      '# Environment Configuration Template',
+      '# Copy this file to .env and fill in the values',
+      '',
+      '# Application Configuration',
+      'NODE_ENV=development',
+      'PORT=3000',
+      '',
+    ];
+
+    // Group environment variables by category
+    const dbVars = envVars.filter(v => v.includes('DB_') || v.includes('DATABASE_'));
+    const authVars = envVars.filter(v => v.includes('JWT_') || v.includes('AUTH_'));
+    const mailVars = envVars.filter(v => v.includes('MAIL_') || v.includes('SMTP_') || v.includes('RESEND_'));
+    const oauthVars = envVars.filter(v => v.includes('GOOGLE_') || v.includes('GITHUB_') || v.includes('MICROSOFT_'));
+    const awsVars = envVars.filter(v => v.includes('AWS_'));
+    const twilioVars = envVars.filter(v => v.includes('TWILIO_'));
+    const stripeVars = envVars.filter(v => v.includes('STRIPE_'));
+    const otherVars = envVars.filter(v =>
+      !dbVars.includes(v) && !authVars.includes(v) && !mailVars.includes(v) &&
+      !oauthVars.includes(v) && !awsVars.includes(v) && !twilioVars.includes(v) &&
+      !stripeVars.includes(v)
+    );
+
+    // Add database configuration
+    if (dbVars.length > 0) {
+      envTemplateContent.push('# Database Configuration');
+      dbVars.forEach(envVar => {
+        envTemplateContent.push(`${envVar}=`);
+      });
+      envTemplateContent.push('');
+    }
+
+    // Add authentication configuration
+    if (authVars.length > 0) {
+      envTemplateContent.push('# Authentication Configuration');
+      authVars.forEach(envVar => {
+        if (envVar.includes('JWT_SECRET')) {
+          envTemplateContent.push(`${envVar}=your-jwt-secret-key-here`);
+        } else if (envVar.includes('JWT_EXPIRES_IN')) {
+          envTemplateContent.push(`${envVar}=1h`);
+        } else {
+          envTemplateContent.push(`${envVar}=`);
+        }
+      });
+      envTemplateContent.push('');
+    }
+
+    // Add OAuth configuration
+    if (oauthVars.length > 0) {
+      envTemplateContent.push('# OAuth Configuration');
+      const googleVars = oauthVars.filter(v => v.includes('GOOGLE_'));
+      const githubVars = oauthVars.filter(v => v.includes('GITHUB_'));
+      const microsoftVars = oauthVars.filter(v => v.includes('MICROSOFT_'));
+
+      if (googleVars.length > 0) {
+        envTemplateContent.push('# Google OAuth');
+        googleVars.forEach(envVar => envTemplateContent.push(`${envVar}=`));
+      }
+
+      if (githubVars.length > 0) {
+        envTemplateContent.push('# GitHub OAuth');
+        githubVars.forEach(envVar => envTemplateContent.push(`${envVar}=`));
+      }
+
+      if (microsoftVars.length > 0) {
+        envTemplateContent.push('# Microsoft OAuth');
+        microsoftVars.forEach(envVar => envTemplateContent.push(`${envVar}=`));
+      }
+      envTemplateContent.push('');
+    }
+
+    // Add mail configuration
+    if (mailVars.length > 0) {
+      envTemplateContent.push('# Mail Configuration');
+      mailVars.forEach(envVar => {
+        if (envVar.includes('SMTP_PORT')) {
+          envTemplateContent.push(`${envVar}=587`);
+        } else if (envVar.includes('SMTP_SECURE')) {
+          envTemplateContent.push(`${envVar}=false`);
+        } else {
+          envTemplateContent.push(`${envVar}=`);
+        }
+      });
+      envTemplateContent.push('');
+    }
+
+    // Add AWS configuration
+    if (awsVars.length > 0) {
+      envTemplateContent.push('# AWS Configuration');
+      awsVars.forEach(envVar => {
+        if (envVar.includes('AWS_REGION')) {
+          envTemplateContent.push(`${envVar}=us-east-1`);
+        } else {
+          envTemplateContent.push(`${envVar}=`);
+        }
+      });
+      envTemplateContent.push('');
+    }
+
+    // Add Twilio configuration
+    if (twilioVars.length > 0) {
+      envTemplateContent.push('# Twilio Configuration');
+      twilioVars.forEach(envVar => envTemplateContent.push(`${envVar}=`));
+      envTemplateContent.push('');
+    }
+
+    // Add Stripe configuration
+    if (stripeVars.length > 0) {
+      envTemplateContent.push('# Stripe Configuration');
+      stripeVars.forEach(envVar => envTemplateContent.push(`${envVar}=`));
+      envTemplateContent.push('');
+    }
+
+    // Add other configuration
+    if (otherVars.length > 0) {
+      envTemplateContent.push('# Other Configuration');
+      otherVars.forEach(envVar => envTemplateContent.push(`${envVar}=`));
+      envTemplateContent.push('');
+    }
+
+    // Write .env.template file
+    const envTemplatePath = path.join(workDir, '.env.template');
+    await fs.writeFile(envTemplatePath, envTemplateContent.join('\n'), 'utf8');
+
+    this.logger.log(`Generated .env.template with ${envVars.length} environment variables`);
   }
 
   async getPresets(): Promise<any[]> {

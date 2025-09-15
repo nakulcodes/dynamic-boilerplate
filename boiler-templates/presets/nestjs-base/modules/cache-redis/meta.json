@@ -1,0 +1,25 @@
+{
+  "name": "cache-redis",
+  "description": "Redis-based caching service for improved application performance",
+  "deps": {
+    "ioredis": "^5.0.0"
+  },
+  "devDeps": {
+    "@types/ioredis": "^5.0.0"
+  },
+  "env": [
+    "REDIS_URL",
+    "REDIS_HOST",
+    "REDIS_PORT",
+    "REDIS_PASSWORD"
+  ],
+  "filesPath": "files",
+  "conflicts": ["cache-memory"],
+  "inject": {
+    "src/app.module.ts": {
+      "import": ["import { CacheModule } from '@modules/cache/cache.module';"],
+      "register": ["CacheModule"]
+    }
+  },
+  "postInstall": []
+}

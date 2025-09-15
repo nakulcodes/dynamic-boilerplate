@@ -15,7 +15,7 @@ export class UsersService {
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
-    return this.userRepository.createUser(createUserDto);
+    return this.userRepository.create(createUserDto);
   }
 
   async findAll(): Promise<User[]> {
@@ -35,6 +35,6 @@ export class UsersService {
   }
 
   async remove(id: number): Promise<boolean> {
-    return this.userRepository.deleteUser(id);
+    return this.userRepository.delete(id);
   }
 }

@@ -1,19 +1,15 @@
 import { Module, OnModuleInit } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { MailService } from './mail.service';
 import { MailController } from './mail.controller';
 import { TemplateService } from './services/template.service';
-import { Template } from './entities/template.entity';
+import { TemplateRepository } from '@db/repositories/template.repository';
 
 @Module({
-  imports: [
-    ConfigModule,
-    TypeOrmModule.forFeature([Template]),
-  ],
+  imports: [ConfigModule],
   controllers: [MailController],
-  providers: [MailService, TemplateService],
-  exports: [MailService, TemplateService],
+  providers: [MailService, TemplateService, TemplateRepository],
+  exports: [MailService],
 })
 export class MailModule implements OnModuleInit {
   constructor(private mailService: MailService) {}

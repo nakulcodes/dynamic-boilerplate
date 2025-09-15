@@ -16,3 +16,12 @@
 2. Add file module like s3 aws
 3. Add notifications send using twillio
 4. Add stripe module
+
+
+1. .env.template should be generated as we select modules
+2. FOr database entities entites should be in folder above src i.e. database. Inside that entities should hold all entities and repositories will have all respositoried for respective entities. 
+3. Have user selection if primary generated column should be uuid or simple int
+4. Each module will inject repository directly as @db/repositorie/<name of repo>
+
+
+1. Now implement redis layer to store refresh token and add good and solid auth system. 

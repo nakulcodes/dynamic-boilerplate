@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Template, TemplateType, TemplateCategory } from '../entities/template.entity';
+import { Template, TemplateType, TemplateCategory } from '@db/entities/template.entity';
+import { TemplateRepository } from '@db/repositories/template.repository';
 
 export interface TemplateVariables {
   [key: string]: any;
@@ -18,17 +17,14 @@ export interface ProcessedTemplate {
 @Injectable()
 export class TemplateService {
   constructor(
-    @InjectRepository(Template)
-    private templateRepository: Repository<Template>,
-  ) { }
+    private readonly templateRepository: TemplateRepository,
+  ) {}
 
   /**
    * Get template by ID and populate variables
    */
   async getTemplateById(templateId: string, variables: TemplateVariables = {}): Promise<ProcessedTemplate> {
-    const template = await this.templateRepository.findOne({
-      where: { id: templateId, isActive: true },
-    });
+    const template = await this.templateRepository.findById(templateId);
 
     if (!template) {
       throw new NotFoundException(`Template with ID ${templateId} not found`);
@@ -41,9 +37,7 @@ export class TemplateService {
    * Get template by name and populate variables
    */
   async getTemplateByName(name: string, variables: TemplateVariables = {}): Promise<ProcessedTemplate> {
-    const template = await this.templateRepository.findOne({
-      where: { name, isActive: true },
-    });
+    const template = await this.templateRepository.findByName(name);
 
     if (!template) {
       throw new NotFoundException(`Template with name ${name} not found`);
@@ -60,9 +54,7 @@ export class TemplateService {
     type: TemplateType = TemplateType.EMAIL,
     variables: TemplateVariables = {}
   ): Promise<ProcessedTemplate> {
-    const template = await this.templateRepository.findOne({
-      where: { category, type, isActive: true },
-    });
+    const template = await this.templateRepository.findByCategory(category, type);
 
     if (!template) {
       throw new NotFoundException(`Template for category ${category} and type ${type} not found`);
@@ -75,22 +67,20 @@ export class TemplateService {
    * Create a new template
    */
   async createTemplate(templateData: Partial<Template>): Promise<Template> {
-    const template = this.templateRepository.create(templateData);
-    return await this.templateRepository.save(template);
+    return await this.templateRepository.createTemplate(templateData);
   }
 
   /**
    * Update existing template
    */
   async updateTemplate(templateId: string, updateData: Partial<Template>): Promise<Template> {
-    const template = await this.templateRepository.findOne({ where: { id: templateId } });
+    const template = await this.templateRepository.updateTemplate(templateId, updateData);
 
     if (!template) {
       throw new NotFoundException(`Template with ID ${templateId} not found`);
     }
 
-    Object.assign(template, updateData);
-    return await this.templateRepository.save(template);
+    return template;
   }
 
   /**
@@ -101,33 +91,16 @@ export class TemplateService {
     category?: TemplateCategory,
     isActive?: boolean
   ): Promise<Template[]> {
-    const queryBuilder = this.templateRepository.createQueryBuilder('template');
-
-    if (type) {
-      queryBuilder.andWhere('template.type = :type', { type });
-    }
-
-    if (category) {
-      queryBuilder.andWhere('template.category = :category', { category });
-    }
-
-    if (isActive !== undefined) {
-      queryBuilder.andWhere('template.isActive = :isActive', { isActive });
-    }
-
-    return await queryBuilder.getMany();
+    return await this.templateRepository.findTemplatesByFilters(type, category, isActive);
   }
 
   /**
    * Delete template (soft delete by setting isActive to false)
    */
   async deleteTemplate(templateId: string): Promise<void> {
-    const result = await this.templateRepository.update(
-      { id: templateId },
-      { isActive: false }
-    );
+    const result = await this.templateRepository.deleteTemplate(templateId);
 
-    if (result.affected === 0) {
+    if (!result) {
       throw new NotFoundException(`Template with ID ${templateId} not found`);
     }
   }
