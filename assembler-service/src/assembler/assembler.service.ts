@@ -6,6 +6,7 @@ import * as os from 'os';
 import { globby } from 'globby';
 import * as Handlebars from 'handlebars';
 import { StorageService } from '../storage/storage.service';
+import { GitHubService } from '../github/github.service';
 import { GenerateProjectDto } from '../common/dto/generate-project.dto';
 import { ModuleMeta, GenerationResult } from '../common/interfaces/module-meta.interface';
 
@@ -17,6 +18,7 @@ export class AssemblerService {
   constructor(
     private configService: ConfigService,
     private storageService: StorageService,
+    private githubService: GitHubService,
   ) {
     this.templatesPath = path.resolve(__dirname, '../../../boiler-templates');
   }
@@ -60,8 +62,40 @@ export class AssemblerService {
           };
         }
 
-        // TODO: Implement GitHub push
-        throw new BadRequestException('GitHub output not yet implemented');
+        if (generateDto.output.type === 'github') {
+          const githubOutput = generateDto.output as any;
+
+          if (!githubOutput.userId) {
+            throw new BadRequestException('GitHub output requires userId');
+          }
+
+          // Create repository if specified
+          if (githubOutput.createRepository) {
+            await this.githubService.createRepository(githubOutput.userId, {
+              name: githubOutput.repositoryName || generateDto.projectName,
+              description: githubOutput.description || `Generated ${generateDto.preset} project`,
+              private: githubOutput.private || false,
+              autoInit: false, // We'll push our own content
+            });
+          }
+
+          // Push project to GitHub
+          const pushResult = await this.githubService.pushProjectToRepository({
+            userId: githubOutput.userId,
+            repositoryName: githubOutput.repositoryName || generateDto.projectName,
+            projectPath: workDir,
+            commitMessage: githubOutput.commitMessage || `Initial commit: Generated ${generateDto.preset} project`,
+            branch: githubOutput.branch || 'main',
+          });
+
+          return {
+            status: 'success',
+            outputUrl: pushResult.repositoryUrl,
+            envRequired: result.envRequired,
+          };
+        }
+
+        throw new BadRequestException('Invalid output type specified');
 
       } finally {
         // Cleanup working directory
@@ -129,7 +163,7 @@ export class AssemblerService {
     const packagePath = path.join(workDir, 'package.json');
     let packageJson = await fs.readJson(packagePath).catch(() => ({}));
 
-    const envSet = new Set<string>();
+    const envVars: (string | { key: string; required: boolean; example?: string })[] = [];
     const modulesPath = path.join(presetPath, 'modules');
 
     // Process each module
@@ -154,9 +188,19 @@ export class AssemblerService {
           packageJson.devDependencies = { ...packageJson.devDependencies, ...meta.devDeps };
         }
 
-        // Collect environment variables
+        // Collect environment variables (supporting both string and object formats)
         if (meta.env) {
-          meta.env.forEach(envVar => envSet.add(envVar));
+          meta.env.forEach(envVar => {
+            // Avoid duplicates by checking if the key already exists
+            const key = typeof envVar === 'string' ? envVar : envVar.key;
+            const exists = envVars.some(existing => {
+              const existingKey = typeof existing === 'string' ? existing : existing.key;
+              return existingKey === key;
+            });
+            if (!exists) {
+              envVars.push(envVar);
+            }
+          });
         }
 
         // Apply injections
@@ -170,18 +214,23 @@ export class AssemblerService {
     await fs.writeJson(packagePath, packageJson, { spaces: 2 });
 
     // Generate .env.template file
-    await this.generateEnvTemplate(workDir, Array.from(envSet));
+    await this.generateEnvTemplate(workDir, envVars);
+
+    // Create array of env keys for the project metadata
+    const envRequired = envVars.map(envVar =>
+      typeof envVar === 'string' ? envVar : envVar.key
+    );
 
     // Write project metadata
     const projectMeta = {
       generatedAt: new Date().toISOString(),
       preset: path.basename(presetPath),
       modules,
-      envRequired: Array.from(envSet),
+      envRequired,
     };
     await fs.writeJson(path.join(workDir, 'meta.json'), projectMeta, { spaces: 2 });
 
-    return { envRequired: Array.from(envSet) };
+    return { envRequired };
   }
 
   private async copyAndRender(srcDir: string, destDir: string, context: Record<string, any>): Promise<void> {
@@ -246,7 +295,7 @@ export class AssemblerService {
     }
   }
 
-  private async generateEnvTemplate(workDir: string, envVars: string[]): Promise<void> {
+  private async generateEnvTemplate(workDir: string, envVars: (string | { key: string; required: boolean; example?: string })[]): Promise<void> {
     if (envVars.length === 0) return;
 
     const envTemplateContent = [
@@ -259,14 +308,45 @@ export class AssemblerService {
       '',
     ];
 
+    // Helper function to get the key from either string or object format
+    const getEnvKey = (envVar: string | { key: string; required: boolean; example?: string }): string => {
+      return typeof envVar === 'string' ? envVar : envVar.key;
+    };
+
+    // Helper function to get the example value if available
+    const getEnvExample = (envVar: string | { key: string; required: boolean; example?: string }): string | undefined => {
+      return typeof envVar === 'object' ? envVar.example : undefined;
+    };
+
     // Group environment variables by category
-    const dbVars = envVars.filter(v => v.includes('DB_') || v.includes('DATABASE_'));
-    const authVars = envVars.filter(v => v.includes('JWT_') || v.includes('AUTH_'));
-    const mailVars = envVars.filter(v => v.includes('MAIL_') || v.includes('SMTP_') || v.includes('RESEND_'));
-    const oauthVars = envVars.filter(v => v.includes('GOOGLE_') || v.includes('GITHUB_') || v.includes('MICROSOFT_'));
-    const awsVars = envVars.filter(v => v.includes('AWS_'));
-    const twilioVars = envVars.filter(v => v.includes('TWILIO_'));
-    const stripeVars = envVars.filter(v => v.includes('STRIPE_'));
+    const dbVars = envVars.filter(v => {
+      const key = getEnvKey(v);
+      return key.includes('DB_') || key.includes('DATABASE_');
+    });
+    const authVars = envVars.filter(v => {
+      const key = getEnvKey(v);
+      return key.includes('JWT_') || key.includes('AUTH_') || key.includes('RBAC_');
+    });
+    const mailVars = envVars.filter(v => {
+      const key = getEnvKey(v);
+      return key.includes('MAIL_') || key.includes('SMTP_') || key.includes('RESEND_');
+    });
+    const oauthVars = envVars.filter(v => {
+      const key = getEnvKey(v);
+      return key.includes('GOOGLE_') || key.includes('GITHUB_') || key.includes('MICROSOFT_');
+    });
+    const awsVars = envVars.filter(v => {
+      const key = getEnvKey(v);
+      return key.includes('AWS_');
+    });
+    const twilioVars = envVars.filter(v => {
+      const key = getEnvKey(v);
+      return key.includes('TWILIO_');
+    });
+    const stripeVars = envVars.filter(v => {
+      const key = getEnvKey(v);
+      return key.includes('STRIPE_');
+    });
     const otherVars = envVars.filter(v =>
       !dbVars.includes(v) && !authVars.includes(v) && !mailVars.includes(v) &&
       !oauthVars.includes(v) && !awsVars.includes(v) && !twilioVars.includes(v) &&
@@ -277,7 +357,9 @@ export class AssemblerService {
     if (dbVars.length > 0) {
       envTemplateContent.push('# Database Configuration');
       dbVars.forEach(envVar => {
-        envTemplateContent.push(`${envVar}=`);
+        const key = getEnvKey(envVar);
+        const example = getEnvExample(envVar);
+        envTemplateContent.push(`${key}=${example || ''}`);
       });
       envTemplateContent.push('');
     }
@@ -286,12 +368,15 @@ export class AssemblerService {
     if (authVars.length > 0) {
       envTemplateContent.push('# Authentication Configuration');
       authVars.forEach(envVar => {
-        if (envVar.includes('JWT_SECRET')) {
-          envTemplateContent.push(`${envVar}=your-jwt-secret-key-here`);
-        } else if (envVar.includes('JWT_EXPIRES_IN')) {
-          envTemplateContent.push(`${envVar}=1h`);
+        const key = getEnvKey(envVar);
+        const example = getEnvExample(envVar);
+
+        if (key.includes('JWT_SECRET')) {
+          envTemplateContent.push(`${key}=${example || 'your-jwt-secret-key-here'}`);
+        } else if (key.includes('JWT_EXPIRES_IN')) {
+          envTemplateContent.push(`${key}=${example || '1h'}`);
         } else {
-          envTemplateContent.push(`${envVar}=`);
+          envTemplateContent.push(`${key}=${example || ''}`);
         }
       });
       envTemplateContent.push('');
@@ -300,23 +385,35 @@ export class AssemblerService {
     // Add OAuth configuration
     if (oauthVars.length > 0) {
       envTemplateContent.push('# OAuth Configuration');
-      const googleVars = oauthVars.filter(v => v.includes('GOOGLE_'));
-      const githubVars = oauthVars.filter(v => v.includes('GITHUB_'));
-      const microsoftVars = oauthVars.filter(v => v.includes('MICROSOFT_'));
+      const googleVars = oauthVars.filter(v => getEnvKey(v).includes('GOOGLE_'));
+      const githubVars = oauthVars.filter(v => getEnvKey(v).includes('GITHUB_'));
+      const microsoftVars = oauthVars.filter(v => getEnvKey(v).includes('MICROSOFT_'));
 
       if (googleVars.length > 0) {
         envTemplateContent.push('# Google OAuth');
-        googleVars.forEach(envVar => envTemplateContent.push(`${envVar}=`));
+        googleVars.forEach(envVar => {
+          const key = getEnvKey(envVar);
+          const example = getEnvExample(envVar);
+          envTemplateContent.push(`${key}=${example || ''}`);
+        });
       }
 
       if (githubVars.length > 0) {
         envTemplateContent.push('# GitHub OAuth');
-        githubVars.forEach(envVar => envTemplateContent.push(`${envVar}=`));
+        githubVars.forEach(envVar => {
+          const key = getEnvKey(envVar);
+          const example = getEnvExample(envVar);
+          envTemplateContent.push(`${key}=${example || ''}`);
+        });
       }
 
       if (microsoftVars.length > 0) {
         envTemplateContent.push('# Microsoft OAuth');
-        microsoftVars.forEach(envVar => envTemplateContent.push(`${envVar}=`));
+        microsoftVars.forEach(envVar => {
+          const key = getEnvKey(envVar);
+          const example = getEnvExample(envVar);
+          envTemplateContent.push(`${key}=${example || ''}`);
+        });
       }
       envTemplateContent.push('');
     }
@@ -325,12 +422,15 @@ export class AssemblerService {
     if (mailVars.length > 0) {
       envTemplateContent.push('# Mail Configuration');
       mailVars.forEach(envVar => {
-        if (envVar.includes('SMTP_PORT')) {
-          envTemplateContent.push(`${envVar}=587`);
-        } else if (envVar.includes('SMTP_SECURE')) {
-          envTemplateContent.push(`${envVar}=false`);
+        const key = getEnvKey(envVar);
+        const example = getEnvExample(envVar);
+
+        if (key.includes('SMTP_PORT')) {
+          envTemplateContent.push(`${key}=${example || '587'}`);
+        } else if (key.includes('SMTP_SECURE')) {
+          envTemplateContent.push(`${key}=${example || 'false'}`);
         } else {
-          envTemplateContent.push(`${envVar}=`);
+          envTemplateContent.push(`${key}=${example || ''}`);
         }
       });
       envTemplateContent.push('');
@@ -340,10 +440,13 @@ export class AssemblerService {
     if (awsVars.length > 0) {
       envTemplateContent.push('# AWS Configuration');
       awsVars.forEach(envVar => {
-        if (envVar.includes('AWS_REGION')) {
-          envTemplateContent.push(`${envVar}=us-east-1`);
+        const key = getEnvKey(envVar);
+        const example = getEnvExample(envVar);
+
+        if (key.includes('AWS_REGION')) {
+          envTemplateContent.push(`${key}=${example || 'us-east-1'}`);
         } else {
-          envTemplateContent.push(`${envVar}=`);
+          envTemplateContent.push(`${key}=${example || ''}`);
         }
       });
       envTemplateContent.push('');
@@ -352,21 +455,33 @@ export class AssemblerService {
     // Add Twilio configuration
     if (twilioVars.length > 0) {
       envTemplateContent.push('# Twilio Configuration');
-      twilioVars.forEach(envVar => envTemplateContent.push(`${envVar}=`));
+      twilioVars.forEach(envVar => {
+        const key = getEnvKey(envVar);
+        const example = getEnvExample(envVar);
+        envTemplateContent.push(`${key}=${example || ''}`);
+      });
       envTemplateContent.push('');
     }
 
     // Add Stripe configuration
     if (stripeVars.length > 0) {
       envTemplateContent.push('# Stripe Configuration');
-      stripeVars.forEach(envVar => envTemplateContent.push(`${envVar}=`));
+      stripeVars.forEach(envVar => {
+        const key = getEnvKey(envVar);
+        const example = getEnvExample(envVar);
+        envTemplateContent.push(`${key}=${example || ''}`);
+      });
       envTemplateContent.push('');
     }
 
     // Add other configuration
     if (otherVars.length > 0) {
       envTemplateContent.push('# Other Configuration');
-      otherVars.forEach(envVar => envTemplateContent.push(`${envVar}=`));
+      otherVars.forEach(envVar => {
+        const key = getEnvKey(envVar);
+        const example = getEnvExample(envVar);
+        envTemplateContent.push(`${key}=${example || ''}`);
+      });
       envTemplateContent.push('');
     }
 
