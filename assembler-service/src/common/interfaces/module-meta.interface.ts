@@ -3,7 +3,7 @@ export interface ModuleMeta {
   description: string;
   deps?: Record<string, string>;
   devDeps?: Record<string, string>;
-  env?: string[];
+  env?: (string | { key: string; required: boolean; example?: string })[];
   filesPath?: string;
   conflicts?: string[];
   inject?: Record<string, {

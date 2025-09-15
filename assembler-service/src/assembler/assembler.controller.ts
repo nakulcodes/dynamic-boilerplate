@@ -7,7 +7,7 @@ import {
   ApiSuccessResponse,
   ApiBadRequestResponse,
   ApiInternalServerErrorResponse,
-} from '@decorators/api-response.decorator';
+} from '../common/decorators/api-response.decorator';
 
 @ApiTags('assembler')
 @Controller()

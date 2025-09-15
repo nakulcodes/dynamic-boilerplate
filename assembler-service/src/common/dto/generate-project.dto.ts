@@ -9,26 +9,59 @@ export enum OutputType {
 
 export class GitHubOutputDto {
   @ApiProperty({
-    description: 'GitHub repository owner/organization name',
-    example: 'myusername',
+    description: 'User ID who owns the GitHub token',
+    example: 'user123',
   })
   @IsString()
-  owner: string;
+  userId: string;
 
-  @ApiProperty({
-    description: 'GitHub repository name',
+  @ApiPropertyOptional({
+    description: 'GitHub repository name (defaults to project name)',
     example: 'my-awesome-project',
   })
+  @IsOptional()
   @IsString()
-  repoName: string;
+  repositoryName?: string;
 
-  @ApiProperty({
-    description: 'Authentication method for GitHub',
-    enum: ['oauth', 'github_app'],
-    example: 'oauth',
+  @ApiPropertyOptional({
+    description: 'Repository description',
+    example: 'Generated NestJS project with modules',
   })
-  @IsEnum(['oauth', 'github_app'])
-  authMethod: 'oauth' | 'github_app';
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @ApiPropertyOptional({
+    description: 'Whether the repository should be private',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  private?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Whether to create a new repository (false means push to existing)',
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  createRepository?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Commit message for the initial commit',
+    example: 'Initial commit: Generated NestJS project',
+  })
+  @IsOptional()
+  @IsString()
+  commitMessage?: string;
+
+  @ApiPropertyOptional({
+    description: 'Branch name to push to',
+    example: 'main',
+  })
+  @IsOptional()
+  @IsString()
+  branch?: string;
 }
 
 export class OutputDto {

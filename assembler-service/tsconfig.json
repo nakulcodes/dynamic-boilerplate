@@ -28,7 +28,10 @@
       "@decorators/*": ["src/common/decorators/*"],
       "@pipes/*": ["src/common/pipes/*"],
       "@interceptors/*": ["src/common/interceptors/*"],
-      "@filters/*": ["src/common/filters/*"]
+      "@filters/*": ["src/common/filters/*"],
+      "@db/*": ["src/database/*"],
+      "@db/entities/*": ["src/database/entities/*"],
+      "@db/repositories/*": ["src/database/repositories/*"]
     }
   }
 }

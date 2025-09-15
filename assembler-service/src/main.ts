@@ -1,10 +1,11 @@
+import 'tsconfig-paths/register';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
-import { setupSwagger } from '@config/swagger.config';
-import { ResponseTransformInterceptor } from '@interceptors/response-transform.interceptor';
-import { AllExceptionsFilter } from '@common/exceptions/all-exceptions.filter';
+import { setupSwagger } from './config/swagger.config';
+import { ResponseTransformInterceptor } from './common/interceptors/response-transform.interceptor';
+import { AllExceptionsFilter } from './common/exceptions/all-exceptions.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
