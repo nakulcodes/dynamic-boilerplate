@@ -1,14 +1,18 @@
-[providers]
-node = "20"
-
 [variables]
 NODE_ENV = "production"
+NODE_VERSION = "20.19.1"
 
-[phases.build]
-cmd = "npm ci && npm run build"
-
-[phases.start]
-cmd = "npx serve -s dist -l 8080"
+[providers]
+node = "20.19.1"
 
 [phases.setup]
-nixPkgs = ["nodejs_20", "nginx"]
+nixPkgs = ["nodejs_20"]
+
+[phases.install]
+cmd = "npm ci"
+
+[phases.build]
+cmd = "npm run build"
+
+[phases.start]
+cmd = "npx serve -s dist -p $PORT"
