@@ -56,16 +56,28 @@ export class ApiService {
 
   static async downloadProject(downloadUrl: string, fileName: string): Promise<void> {
     try {
-      // Create a temporary link to trigger download
+      // For cross-origin downloads, we need to fetch the file and create a blob
+      const response = await fetch(downloadUrl);
+
+      if (!response.ok) {
+        throw new Error(`Download failed: ${response.status} ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+
+      // Create a blob URL and trigger download
+      const blobUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = downloadUrl;
+      link.href = blobUrl;
       link.download = fileName;
-      link.target = '_blank';
 
       // Append to body, click, and remove
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+
+      // Clean up the blob URL
+      window.URL.revokeObjectURL(blobUrl);
     } catch (error) {
       console.error('Failed to download project:', error);
       throw error;
