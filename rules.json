@@ -1,0 +1,516 @@
+{
+  "version": "1.0.0",
+  "description": "Architectural patterns, conventions, and rules for the dynamic boilerplate generation system",
+  "lastUpdated": "2025-09-15",
+  "rules": {
+    "repository_pattern": {
+      "description": "Rules for implementing the Repository pattern with TypeORM",
+      "inheritance": {
+        "rule": "All repositories MUST extend Repository<Entity> with DataSource",
+        "pattern": "@Injectable()\nexport class EntityRepository extends Repository<Entity> {\n  constructor(private readonly dataSource: DataSource) {\n    super(Entity, dataSource.createEntityManager());\n  }\n}",
+        "required_imports": [
+          "import { Repository, DataSource } from 'typeorm';",
+          "import { Injectable } from '@nestjs/common';"
+        ]
+      },
+      "method_naming": {
+        "rule": "Repository methods MUST follow consistent naming conventions",
+        "conventions": {
+          "find_operations": {
+            "find_all": "findAll(): Promise<Entity[]>",
+            "find_by_id": "findById(id: EntityIdType): Promise<Entity | null>",
+            "find_by_field": "findBy{FieldName}(value: FieldType): Promise<Entity | null>",
+            "find_filtered": "findBy{FilterName}(filters): Promise<Entity[]>"
+          },
+          "write_operations": {
+            "create": "create{EntityName}(entityData: Partial<Entity>): Promise<Entity>",
+            "update": "update{EntityName}(id: EntityIdType, updateData: Partial<Entity>): Promise<Entity | null>",
+            "delete": "delete{EntityName}(id: EntityIdType): Promise<boolean>"
+          },
+          "existence_checks": {
+            "exists_by_id": "exists(id: EntityIdType): Promise<boolean>",
+            "exists_by_field": "existsBy{FieldName}(value: FieldType): Promise<boolean>"
+          }
+        }
+      },
+      "location_and_imports": {
+        "rule": "Repositories MUST be located in src/database/repositories/ and imported using @db/repositories alias",
+        "location": "src/database/repositories/{entity-name}.repository.ts",
+        "import_pattern": "import { EntityRepository } from '@db/repositories/entity.repository';",
+        "example": "import { UserRepository } from '@db/repositories/user.repository';"
+      }
+    },
+    "database_architecture": {
+      "description": "Rules for database layer organization and configuration",
+      "entity_location": {
+        "rule": "All entities MUST be located in src/database/entities/",
+        "location": "src/database/entities/{entity-name}.entity.ts",
+        "import_pattern": "import { Entity } from '@db/entities/entity.entity';",
+        "example": "import { User } from '@db/entities/user.entity';"
+      },
+      "repository_location": {
+        "rule": "All repositories MUST be located in src/database/repositories/",
+        "location": "src/database/repositories/{entity-name}.repository.ts",
+        "naming_convention": "{EntityName}Repository"
+      },
+      "path_aliases": {
+        "rule": "Database paths MUST use @db/* alias pointing to src/database/*",
+        "aliases": {
+          "@db/*": "src/database/*",
+          "@db/entities/*": "src/database/entities/*",
+          "@db/repositories/*": "src/database/repositories/*"
+        },
+        "tsconfig_setup": {
+          "paths": {
+            "@db/*": ["src/database/*"]
+          }
+        }
+      },
+      "typeorm_configuration": {
+        "rule": "NO TypeORM.forFeature at module level - handled by top-level DB module",
+        "forbidden": "TypeOrmModule.forFeature([Entity]) // ❌ NEVER do this in feature modules",
+        "correct": "Repository injection through DataSource constructor // ✅ Use this pattern",
+        "rationale": "Centralized entity management prevents circular dependencies and improves maintainability"
+      }
+    },
+    "dto_organization": {
+      "description": "Rules for organizing DTOs with proper request/response structure",
+      "structure": {
+        "rule": "DTOs MUST be organized in request/response folders within each module",
+        "location": "src/modules/{module}/dto/",
+        "folder_structure": {
+          "request": "src/modules/{module}/dto/request/",
+          "response": "src/modules/{module}/dto/response/"
+        },
+        "naming_conventions": {
+          "request_dtos": [
+            "search-{resource}.dto.ts",
+            "create-{resource}.dto.ts",
+            "update-{resource}.dto.ts",
+            "filter-{resource}.dto.ts"
+          ],
+          "response_dtos": [
+            "{resource}.response.dto.ts",
+            "paginated-{resource}.response.dto.ts",
+            "statistics.response.dto.ts"
+          ]
+        }
+      },
+      "base_dtos": {
+        "rule": "Common DTOs MUST be placed in src/common/dto/ and extended by feature DTOs",
+        "location": "src/common/dto/",
+        "required_base_dtos": [
+          "PaginationDto",
+          "DateRangeDto",
+          "FilterDto",
+          "BaseResponseDto",
+          "PaginatedResponseDto",
+          "ErrorResponseDto"
+        ],
+        "usage": "Feature DTOs should extend base DTOs for consistency"
+      },
+      "validation": {
+        "rule": "All DTOs MUST include proper validation decorators",
+        "required_decorators": [
+          "@IsOptional() // for optional fields",
+          "@IsString() // for string fields",
+          "@IsNumber() // for number fields",
+          "@IsEnum() // for enum fields",
+          "@IsEmail() // for email fields",
+          "@IsUUID() // for UUID fields"
+        ],
+        "swagger_decorators": [
+          "@ApiProperty() // for required fields",
+          "@ApiPropertyOptional() // for optional fields"
+        ]
+      },
+      "controller_usage": {
+        "rule": "Controllers MUST use DTOs instead of @ApiQuery decorators",
+        "forbidden": "@ApiQuery({ name: 'param', type: String }) // ❌ NEVER use this",
+        "correct": "@Query() searchDto: SearchResourceDto // ✅ Use this pattern",
+        "method_signature": "async method(@Query() dto: RequestDto): Promise<ResponseDto>"
+      },
+      "examples": {
+        "search_dto": {
+          "extends": "PaginationDto",
+          "includes": "filters, date ranges, sorting options",
+          "validation": "All fields properly validated"
+        },
+        "response_dto": {
+          "includes": "data, metadata, timestamps",
+          "pagination": "Extends PaginatedResponseDto for list responses"
+        }
+      }
+    },
+    "module_structure": {
+      "description": "Rules for NestJS module organization and dependency injection",
+      "import_patterns": {
+        "rule": "Modules MUST follow consistent import and export patterns",
+        "required_imports": [
+          "import { Module } from '@nestjs/common';",
+          "import { ConfigModule } from '@nestjs/config'; // when using configuration"
+        ],
+        "service_imports": "Import services from same module directory",
+        "repository_imports": "Import repositories using @db/repositories alias",
+        "cross_module_imports": "Import other modules for dependency injection"
+      },
+      "provider_registration": {
+        "rule": "Repositories MUST be registered in providers but with minimal exports",
+        "pattern": {
+          "providers": "[Service, Repository]",
+          "exports": "[Service] // Export service, not repository",
+          "rationale": "Encapsulate data access behind service layer"
+        }
+      },
+      "configuration_access": {
+        "rule": "Configuration MUST be accessed through ConfigService, NEVER process.env directly",
+        "correct": "constructor(private configService: ConfigService) {}\nconst value = this.configService.get<string>('KEY');",
+        "forbidden": "const value = process.env.KEY; // ❌ NEVER do this",
+        "dependency_injection": "ConfigService must be injected through constructor"
+      },
+      "oauth_module_injection": {
+        "rule": "OAuth modules MUST inject into auth.module.ts, NOT app.module.ts",
+        "correct_target": "src/modules/auth/auth.module.ts",
+        "forbidden_target": "src/app.module.ts",
+        "injection_pattern": {
+          "meta.json": {
+            "inject": {
+              "src/modules/auth/auth.module.ts": {
+                "import": ["import { GoogleOAuthModule } from './google-oauth/google-oauth.module';"],
+                "register": ["GoogleOAuthModule"]
+              }
+            }
+          }
+        }
+      }
+    },
+    "environment_and_caching": {
+      "description": "Rules for environment variable management and caching strategies",
+      "env_template_generation": {
+        "rule": ".env.template MUST be auto-generated based on selected modules",
+        "generation_trigger": "Assembled from meta.json env arrays of selected modules with enhanced format",
+        "env_format": "Each env entry is object with {key, required, example} properties",
+        "categorization": {
+          "database": "Variables containing 'DB_' or 'DATABASE_'",
+          "authentication": "Variables containing 'JWT_' or 'AUTH_'",
+          "mail": "Variables containing 'MAIL_', 'SMTP_', or 'RESEND_'",
+          "oauth": "Variables containing 'GOOGLE_', 'GITHUB_', 'MICROSOFT_'",
+          "aws": "Variables containing 'AWS_'",
+          "twilio": "Variables containing 'TWILIO_'",
+          "stripe": "Variables containing 'STRIPE_'"
+        },
+        "template_structure": [
+          "# Environment Configuration Template",
+          "# Copy this file to .env and fill in the values",
+          "",
+          "# Application Configuration",
+          "NODE_ENV=development",
+          "PORT=3000",
+          "",
+          "# [Category] Configuration",
+          "VARIABLE_NAME=",
+          ""
+        ]
+      },
+      "caching_options": {
+        "rule": "Caching modules MUST have proper conflict management",
+        "available_options": ["cache-redis", "cache-memory"],
+        "conflict_rule": "cache-redis conflicts with cache-memory",
+        "meta_json_structure": {
+          "cache_redis_conflicts": ["cache-memory"],
+          "cache_memory_conflicts": ["cache-redis"]
+        }
+      },
+      "environment_variable_naming": {
+        "conventions": {
+          "database": "DB_*, DATABASE_*",
+          "authentication": "JWT_*, AUTH_*",
+          "oauth_google": "GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_CALLBACK_URL",
+          "oauth_github": "GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, GITHUB_CALLBACK_URL",
+          "mail_resend": "RESEND_API_KEY, MAIL_FROM",
+          "mail_smtp": "SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_SECURE",
+          "aws": "AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION",
+          "redis": "REDIS_URL, REDIS_HOST, REDIS_PORT, REDIS_PASSWORD"
+        }
+      }
+    },
+    "code_generation": {
+      "description": "Rules for module structure and code generation patterns",
+      "module_directory_structure": {
+        "rule": "Modules MUST follow standardized directory structure in boiler-templates/",
+        "structure": {
+          "root": "boiler-templates/presets/{preset-name}/modules/{module-name}/",
+          "meta_file": "meta.json",
+          "files_directory": "files/",
+          "file_structure": "files/ mirrors target project structure starting from project root"
+        },
+        "example": {
+          "mail-resend": {
+            "meta.json": "Module configuration",
+            "files/src/modules/mail/": "Mail module implementation",
+            "files/src/database/entities/": "Template entity",
+            "files/src/database/repositories/": "Template repository"
+          }
+        }
+      },
+      "meta_json_structure": {
+        "rule": "meta.json MUST contain all module configuration",
+        "required_fields": {
+          "name": "string - Module identifier",
+          "description": "string - Human readable description",
+          "category": "string - Module category (authentication, communication, storage, etc.)",
+          "required": "boolean - Whether module is required for preset",
+          "filesPath": "string - Relative path to files directory (default: 'files')"
+        },
+        "optional_fields": {
+          "deps": "object - NPM dependencies to add",
+          "devDeps": "object - NPM dev dependencies to add",
+          "env": "array - Environment variables with enhanced format [{key, required, example}]",
+          "routes": "string[] - API routes exposed by this module",
+          "dependsOn": "string[] - Module dependencies that must be installed first",
+          "optionalDeps": "string[] - Optional module dependencies",
+          "qualityChecklist": "string[] - Quality requirements (unit-tests, e2e-tests, README, openapi)",
+          "conflicts": "string[] - Module names that conflict",
+          "inject": "object - File injection patterns",
+          "postInstall": "string[] - Post-installation commands"
+        },
+        "injection_structure": {
+          "inject": {
+            "target/file/path.ts": {
+              "import": ["import statements to add"],
+              "register": ["module registrations to add"]
+            }
+          }
+        }
+      },
+      "conflict_management": {
+        "rule": "Modules MUST declare conflicts to prevent incompatible combinations",
+        "validation": "Assembler validates no selected modules conflict before generation",
+        "examples": {
+          "mail_services": ["mail-resend", "mail-smtp"],
+          "cache_services": ["cache-redis", "cache-memory"],
+          "database_types": ["database-postgres", "database-mysql", "database-sqlite"]
+        }
+      },
+      "file_copying_strategy": {
+        "copy_and_render": {
+          "rule": "Files MUST be copied with Handlebars template rendering",
+          "context_variables": {
+            "projectName": "Generated project name",
+            "author": "Project author (default: 'Generated User')"
+          },
+          "binary_file_handling": "Files >1MB copied as binary without rendering",
+          "text_file_processing": "UTF-8 files processed through Handlebars"
+        },
+        "merge_strategies": {
+          "package.json": "Dependencies merged, not replaced",
+          "code_injection": "Placeholder-based injection for imports and registrations",
+          "configuration_files": "Template rendering with context variables"
+        }
+      }
+    },
+    "template_and_service_patterns": {
+      "description": "Rules for template-based systems and service layer patterns",
+      "template_based_mail_system": {
+        "rule": "Mail services MUST implement template-based architecture",
+        "components": {
+          "template_entity": {
+            "location": "src/database/entities/template.entity.ts",
+            "enums": ["TemplateType", "TemplateCategory"],
+            "fields": ["name", "subject", "htmlContent", "textContent", "type", "category", "variables", "metadata", "isActive"]
+          },
+          "template_repository": {
+            "location": "src/database/repositories/template.repository.ts",
+            "methods": ["findByName", "findByCategory", "findByType", "createTemplate", "updateTemplate", "deleteTemplate"]
+          },
+          "template_service": {
+            "location": "src/modules/mail/services/template.service.ts",
+            "responsibilities": ["Template CRUD", "Variable interpolation", "Template validation"]
+          },
+          "mail_service": {
+            "location": "src/modules/mail/mail.service.ts",
+            "dependencies": ["TemplateService", "External mail provider"],
+            "initialization": "initializeTemplates() in onModuleInit"
+          }
+        }
+      },
+      "service_layer_patterns": {
+        "rule": "Services MUST follow dependency injection and single responsibility principles",
+        "constructor_injection": {
+          "rule": "All dependencies MUST be injected through constructor",
+          "pattern": "constructor(private readonly dependency: DependencyType) {}",
+          "access_modifier": "Use 'private readonly' for injected dependencies"
+        },
+        "service_responsibilities": {
+          "business_logic": "Services contain business logic, not data access logic",
+          "repository_usage": "Services use repositories for data access",
+          "external_integration": "Services handle external API integration",
+          "configuration_access": "Services use ConfigService for configuration"
+        }
+      },
+      "error_handling_conventions": {
+        "rule": "Services MUST implement consistent error handling",
+        "patterns": {
+          "validation_errors": "Throw BadRequestException for invalid input",
+          "not_found_errors": "Return null for not found, let controller handle 404",
+          "external_service_errors": "Wrap and re-throw with context",
+          "logging": "Use Logger for error tracking and debugging"
+        }
+      }
+    },
+    "injection_placeholders": {
+      "description": "Standardized placeholders for code injection during generation",
+      "import_placeholder": {
+        "placeholder": "// MODULE_IMPORTS_PLACEHOLDER",
+        "location": "After existing imports in target files",
+        "behavior": "New imports added above placeholder, placeholder remains"
+      },
+      "register_placeholder": {
+        "placeholder": "// MODULE_REGISTER_PLACEHOLDER",
+        "location": "Inside imports array of @Module decorator",
+        "behavior": "New modules added with proper indentation above placeholder"
+      },
+      "usage_examples": {
+        "app_module": {
+          "imports": [
+            "ConfigModule.forRoot({...}),",
+            "TypeOrmModule.forRootAsync({...}),",
+            "// MODULE_REGISTER_PLACEHOLDER"
+          ]
+        },
+        "auth_module": {
+          "imports": [
+            "UsersModule,",
+            "PassportModule,",
+            "// MODULE_REGISTER_PLACEHOLDER"
+          ]
+        }
+      }
+    },
+    "handlebars_templating": {
+      "description": "Rules for Handlebars template processing during generation",
+      "context_variables": {
+        "available_variables": {
+          "projectName": "User-provided project name",
+          "author": "User-provided author or 'Generated User'"
+        },
+        "usage": "{{projectName}} and {{author}} in any text file"
+      },
+      "file_processing": {
+        "text_files": "Processed through Handlebars.compile(content)(context)",
+        "binary_files": "Copied directly without processing",
+        "size_limit": "Files >1MB treated as binary regardless of type"
+      }
+    },
+    "project_metadata": {
+      "description": "Generated project metadata and documentation",
+      "meta_json_output": {
+        "location": "Generated project root/meta.json",
+        "content": {
+          "generatedAt": "ISO timestamp of generation",
+          "preset": "Preset name used",
+          "modules": "Array of selected module names",
+          "envRequired": "Array of all required environment variables"
+        }
+      },
+      "env_template_output": {
+        "location": "Generated project root/.env.template",
+        "purpose": "Categorized template for all required environment variables",
+        "instructions": "Copy to .env and fill in values"
+      }
+    }
+  },
+  "examples": {
+    "repository_implementation": {
+      "file": "src/database/repositories/user.repository.ts",
+      "code": "import { Repository, DataSource } from 'typeorm';\nimport { Injectable } from '@nestjs/common';\nimport { User } from '../entities/user.entity';\n\n@Injectable()\nexport class UserRepository extends Repository<User> {\n  constructor(private readonly dataSource: DataSource) {\n    super(User, dataSource.createEntityManager());\n  }\n\n  async findAll(): Promise<User[]> {\n    return this.find();\n  }\n\n  async findById(id: number): Promise<User | null> {\n    return this.findOne({ where: { id } });\n  }\n\n  async createUser(userData: Partial<User>): Promise<User> {\n    const user = this.create(userData);\n    return this.save(user);\n  }\n}"
+    },
+    "service_implementation": {
+      "file": "src/modules/users/users.service.ts",
+      "code": "import { Injectable } from '@nestjs/common';\nimport { User } from '@db/entities/user.entity';\nimport { UserRepository } from '@db/repositories/user.repository';\n\n@Injectable()\nexport class UsersService {\n  constructor(\n    private readonly userRepository: UserRepository,\n  ) {}\n\n  async create(createUserDto: CreateUserDto): Promise<User> {\n    return this.userRepository.createUser(createUserDto);\n  }\n\n  async findAll(): Promise<User[]> {\n    return this.userRepository.findAll();\n  }\n}"
+    },
+    "module_implementation": {
+      "file": "src/modules/users/users.module.ts",
+      "code": "import { Module } from '@nestjs/common';\nimport { UserRepository } from '@db/repositories/user.repository';\nimport { UsersService } from './users.service';\nimport { UsersController } from './users.controller';\n\n@Module({\n  imports: [],\n  controllers: [UsersController],\n  providers: [UsersService, UserRepository],\n  exports: [UsersService],\n})\nexport class UsersModule {}"
+    },
+    "meta_json_example": {
+      "file": "boiler-templates/presets/nestjs-base/modules/mail-resend/meta.json",
+      "content": {
+        "name": "mail-resend",
+        "description": "Email service using Resend for sending transactional emails with template support",
+        "category": "communication",
+        "required": false,
+        "deps": {
+          "resend": "^4.0.0"
+        },
+        "devDeps": {},
+        "env": [
+          { "key": "RESEND_API_KEY", "required": true, "example": "re_123456789abcdef" },
+          { "key": "MAIL_FROM", "required": true, "example": "noreply@example.com" },
+          { "key": "MAIL_FROM_NAME", "required": false, "example": "My App" }
+        ],
+        "routes": [
+          "/mail/send",
+          "/mail/templates",
+          "/mail/templates/:id"
+        ],
+        "dependsOn": ["config", "database"],
+        "optionalDeps": [],
+        "qualityChecklist": ["unit-tests", "e2e-tests", "README", "openapi"],
+        "filesPath": "files",
+        "conflicts": ["mail-smtp"],
+        "inject": {
+          "src/app.module.ts": {
+            "import": ["import { MailModule } from '@modules/mail/mail.module';"],
+            "register": ["MailModule"]
+          }
+        },
+        "postInstall": []
+      }
+    }
+  },
+  "migration_guidelines": {
+    "description": "Guidelines for migrating existing code to follow these rules",
+    "repository_migration": {
+      "steps": [
+        "Move entity files to src/database/entities/",
+        "Create repository files in src/database/repositories/",
+        "Update repositories to extend Repository<Entity> with DataSource",
+        "Update import statements to use @db/* aliases",
+        "Remove TypeOrmModule.forFeature from modules"
+      ]
+    },
+    "service_migration": {
+      "steps": [
+        "Replace process.env usage with ConfigService injection",
+        "Update repository imports to use @db/repositories alias",
+        "Ensure constructor dependency injection pattern",
+        "Move business logic from repositories to services"
+      ]
+    }
+  },
+  "validation_checklist": {
+    "description": "Checklist for validating adherence to these rules",
+    "repository_validation": [
+      "✅ Extends Repository<Entity> with DataSource",
+      "✅ Located in src/database/repositories/",
+      "✅ Follows naming conventions for methods",
+      "✅ Uses @Injectable() decorator",
+      "✅ Imports use @db/* aliases"
+    ],
+    "module_validation": [
+      "✅ Repositories registered in providers but not exported",
+      "✅ Services exported for cross-module usage",
+      "✅ No TypeOrmModule.forFeature usage",
+      "✅ ConfigService used instead of process.env",
+      "✅ OAuth modules inject into auth.module.ts"
+    ],
+    "generation_validation": [
+      "✅ meta.json contains all required fields",
+      "✅ Conflicts properly declared",
+      "✅ Environment variables categorized",
+      "✅ Injection targets are correct",
+      "✅ File structure follows conventions"
+    ]
+  }
+}

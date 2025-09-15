@@ -1,0 +1,31 @@
+{
+  "name": "config",
+  "description": "Centralized typed configuration loader with Zod validation for all modules",
+  "category": "core",
+  "required": true,
+  "deps": {
+    "zod": "^3.22.0"
+  },
+  "devDeps": {},
+  "env": [
+    { "key": "NODE_ENV", "required": false, "example": "development" },
+    { "key": "PORT", "required": false, "example": "3000" },
+    { "key": "APP_NAME", "required": false, "example": "My NestJS App" },
+    { "key": "API_PREFIX", "required": false, "example": "api" },
+    { "key": "CORS_ENABLED", "required": false, "example": "true" },
+    { "key": "CORS_ORIGIN", "required": false, "example": "http://localhost:3000" }
+  ],
+  "routes": [],
+  "dependsOn": [],
+  "optionalDeps": [],
+  "qualityChecklist": ["unit-tests", "README"],
+  "filesPath": "files",
+  "conflicts": [],
+  "inject": {
+    "src/app.module.ts": {
+      "import": ["import { ConfigModule } from '@modules/config/config.module';"],
+      "register": ["ConfigModule"]
+    }
+  },
+  "postInstall": []
+}

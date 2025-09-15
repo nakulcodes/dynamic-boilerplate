@@ -1,14 +1,25 @@
 {
   "name": "mail-resend",
-  "description": "Email service using Resend for sending transactional emails",
+  "description": "Email service using Resend for sending transactional emails with template support",
+  "category": "communication",
+  "required": false,
   "deps": {
     "resend": "^4.0.0"
   },
   "devDeps": {},
   "env": [
-    "RESEND_API_KEY",
-    "MAIL_FROM"
+    { "key": "RESEND_API_KEY", "required": true, "example": "re_123456789abcdef" },
+    { "key": "MAIL_FROM", "required": true, "example": "noreply@example.com" },
+    { "key": "MAIL_FROM_NAME", "required": false, "example": "My App" }
   ],
+  "routes": [
+    "/mail/send",
+    "/mail/templates",
+    "/mail/templates/:id"
+  ],
+  "dependsOn": ["config", "database"],
+  "optionalDeps": [],
+  "qualityChecklist": ["unit-tests", "e2e-tests", "README", "openapi"],
   "filesPath": "files",
   "conflicts": ["mail-smtp"],
   "inject": {

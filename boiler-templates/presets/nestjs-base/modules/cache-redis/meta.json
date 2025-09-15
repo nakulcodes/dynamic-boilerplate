@@ -1,6 +1,8 @@
 {
   "name": "cache-redis",
-  "description": "Redis-based caching service for improved application performance",
+  "description": "Redis-based caching service for improved application performance and distributed caching",
+  "category": "cache",
+  "required": false,
   "deps": {
     "ioredis": "^5.0.0"
   },
@@ -8,11 +10,16 @@
     "@types/ioredis": "^5.0.0"
   },
   "env": [
-    "REDIS_URL",
-    "REDIS_HOST",
-    "REDIS_PORT",
-    "REDIS_PASSWORD"
+    { "key": "REDIS_URL", "required": false, "example": "redis://localhost:6379" },
+    { "key": "REDIS_HOST", "required": false, "example": "localhost" },
+    { "key": "REDIS_PORT", "required": false, "example": "6379" },
+    { "key": "REDIS_PASSWORD", "required": false, "example": "redis_password" },
+    { "key": "REDIS_DB", "required": false, "example": "0" }
   ],
+  "routes": [],
+  "dependsOn": ["config"],
+  "optionalDeps": [],
+  "qualityChecklist": ["unit-tests", "integration-tests", "README"],
   "filesPath": "files",
   "conflicts": ["cache-memory"],
   "inject": {

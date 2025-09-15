@@ -1,6 +1,8 @@
 {
   "name": "health-check",
   "description": "Health check endpoints with database, memory, and Kubernetes probes",
+  "category": "monitoring",
+  "required": false,
   "deps": {
     "@nestjs/terminus": "^10.0.0",
     "@nestjs/axios": "^3.0.0",
@@ -8,6 +10,15 @@
   },
   "devDeps": {},
   "env": [],
+  "routes": [
+    "/health",
+    "/health/database",
+    "/health/memory",
+    "/health/storage"
+  ],
+  "dependsOn": ["config"],
+  "optionalDeps": ["database"],
+  "qualityChecklist": ["unit-tests", "integration-tests", "README", "openapi"],
   "filesPath": "files",
   "conflicts": [],
   "inject": {

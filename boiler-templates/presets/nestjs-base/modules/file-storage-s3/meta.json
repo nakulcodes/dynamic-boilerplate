@@ -1,6 +1,8 @@
 {
   "name": "file-storage-s3",
   "description": "AWS S3 file storage service with upload, download, and management capabilities",
+  "category": "storage",
+  "required": false,
   "deps": {
     "@aws-sdk/client-s3": "^3.0.0",
     "@aws-sdk/s3-request-presigner": "^3.0.0",
@@ -12,11 +14,20 @@
     "@types/multer": "^1.4.7"
   },
   "env": [
-    "AWS_ACCESS_KEY_ID",
-    "AWS_SECRET_ACCESS_KEY",
-    "AWS_S3_BUCKET",
-    "AWS_REGION"
+    { "key": "AWS_ACCESS_KEY_ID", "required": true, "example": "AKIA1234567890" },
+    { "key": "AWS_SECRET_ACCESS_KEY", "required": true, "example": "abcdef1234567890abcdef1234567890abcdef12" },
+    { "key": "AWS_S3_BUCKET", "required": true, "example": "my-app-bucket" },
+    { "key": "AWS_REGION", "required": true, "example": "us-east-1" }
   ],
+  "routes": [
+    "/files/upload",
+    "/files/:id",
+    "/files/:id/download",
+    "/files/:id/presigned-url"
+  ],
+  "dependsOn": ["config"],
+  "optionalDeps": [],
+  "qualityChecklist": ["unit-tests", "integration-tests", "README", "openapi"],
   "filesPath": "files",
   "conflicts": [],
   "inject": {

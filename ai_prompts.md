@@ -25,3 +25,57 @@
 
 
 1. Now implement redis layer to store refresh token and add good and solid auth system. 
+
+
+. config
+
+Purpose: Centralized typed config loader + validation for all modules.
+
+When: Always.
+
+Key env vars: none specific (module reads others).
+
+Likely deps / exports: @nestjs/config, Zod or Joi; ConfigService, typed config schemas.
+
+Notes: Validate at startup; expose typed config objects for modules.
+
+2. database (orm)
+
+Purpose: Prisma / TypeORM wrapper, connection manager, migrations runner.
+
+When: When app uses a database.
+
+Key env vars: DATABASE_URL, NODE_ENV, MIGRATION_STRATEGY.
+
+Deps / exports: Prisma or TypeORM, migration CLI.
+
+Exposes: DB client via DI, repository helpers.
+
+
+18. audit-log
+
+Purpose: Immutable audit trail for sensitive events.
+
+Key env vars: AUDIT_SINK.
+
+Exposes: @Audit() decorator; audit query endpoints.
+
+Module manifest example (module.json)
+
+Use this template inside each module folder to standardize UI/CLI generation.
+
+{
+  "id": "auth-jwt",
+  "name": "Auth (JWT)",
+  "description": "JWT-based authentication with access + refresh tokens and cookie/session support.",
+  "category": "auth",
+  "required": true,
+  "env": [
+    { "key": "JWT_SECRET", "required": true, "example": "super-secret" },
+    { "key": "REFRESH_SECRET", "required": false, "example": "refresh-secret" }
+  ],
+  "routes": ["/auth/login", "/auth/refresh", "/auth/logout"],
+  "dependsOn": ["users", "config"],
+  "optionalDeps": ["rate-limit", "audit-log"],
+  "qualityChecklist": ["openapi", "unit-tests", "e2e-tests", "README"]
+}
