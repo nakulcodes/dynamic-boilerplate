@@ -1,0 +1,65 @@
+{
+  "name": "react-shadcn-admin",
+  "displayName": "React Admin Dashboard",
+  "description": "Modern React admin dashboard with shadcn/ui, dark mode, and responsive design. Features clean, minimal aesthetic inspired by Vercel's design language.",
+  "category": "frontend",
+  "version": "1.0.0",
+  "author": "Dynamic Boilerplate Generator",
+  "tags": ["react", "shadcn", "admin", "dashboard", "typescript", "tailwind", "vite"],
+  "preview": {
+    "image": "/previews/react-shadcn-admin.png",
+    "description": "A modern admin dashboard with sidebar navigation, dark mode support, and beautiful shadcn/ui components"
+  },
+  "features": [
+    "⚡ Vite for lightning-fast development",
+    "⚛️ React 18 with TypeScript",
+    "🎨 shadcn/ui components",
+    "🌗 Dark/Light mode with system preference",
+    "📱 Fully responsive design",
+    "🎯 Modern sidebar layout",
+    "🔧 ESLint and Prettier configured",
+    "📦 Zustand for state management"
+  ],
+  "requirements": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "@radix-ui/react-avatar": "^1.1.1",
+    "@radix-ui/react-dropdown-menu": "^2.1.2",
+    "@radix-ui/react-separator": "^1.1.0",
+    "@radix-ui/react-dialog": "^1.1.2",
+    "lucide-react": "^0.456.0",
+    "tailwindcss": "^3.4.14",
+    "framer-motion": "^12.1.4",
+    "zustand": "^5.0.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "~5.6.3",
+    "vite": "^6.0.1",
+    "eslint": "^9.13.0",
+    "prettier": "^3.3.3"
+  },
+  "placeholders": {
+    "{{projectName}}": {
+      "description": "The name of your project",
+      "example": "my-admin-dashboard",
+      "validation": "^[a-z0-9-]+$"
+    },
+    "{{author}}": {
+      "description": "Project author name",
+      "example": "John Doe",
+      "validation": "^[a-zA-Z\\s]+$"
+    }
+  }
+}
