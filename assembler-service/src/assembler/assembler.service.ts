@@ -1,0 +1,287 @@
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import * as fs from 'fs-extra';
+import * as path from 'path';
+import * as os from 'os';
+import { globby } from 'globby';
+import * as Handlebars from 'handlebars';
+import { StorageService } from '../storage/storage.service';
+import { GenerateProjectDto } from '../common/dto/generate-project.dto';
+import { ModuleMeta, GenerationResult } from '../common/interfaces/module-meta.interface';
+
+@Injectable()
+export class AssemblerService {
+  private readonly logger = new Logger(AssemblerService.name);
+  private readonly templatesPath: string;
+
+  constructor(
+    private configService: ConfigService,
+    private storageService: StorageService,
+  ) {
+    this.templatesPath = path.resolve(__dirname, '../../../boiler-templates');
+  }
+
+  async generateProject(generateDto: GenerateProjectDto): Promise<GenerationResult> {
+    try {
+      this.logger.log(`Starting project generation: ${generateDto.projectName}`);
+
+      // Validate preset exists
+      const presetPath = path.join(this.templatesPath, 'presets', generateDto.preset);
+      if (!await fs.pathExists(presetPath)) {
+        throw new BadRequestException(`Preset '${generateDto.preset}' not found`);
+      }
+
+      // Validate modules and check conflicts
+      await this.validateModules(generateDto.preset, generateDto.modules);
+
+      // Create working directory
+      const workDir = path.join(os.tmpdir(), `generated-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
+      await fs.ensureDir(workDir);
+
+      try {
+        // Generate project
+        const result = await this.assembleProject({
+          presetPath,
+          modules: generateDto.modules,
+          workDir,
+          context: {
+            projectName: generateDto.projectName,
+            author: generateDto.author || 'Generated User',
+          },
+        });
+
+        // Create output based on type
+        if (generateDto.output.type === 'zip') {
+          const zipPath = await this.storageService.createZip(workDir, `${generateDto.projectName}.zip`);
+          return {
+            status: 'success',
+            outputUrl: zipPath,
+            envRequired: result.envRequired,
+          };
+        }
+
+        // TODO: Implement GitHub push
+        throw new BadRequestException('GitHub output not yet implemented');
+
+      } finally {
+        // Cleanup working directory
+        await fs.remove(workDir).catch(err =>
+          this.logger.warn(`Failed to cleanup ${workDir}:`, err)
+        );
+      }
+
+    } catch (error) {
+      this.logger.error('Project generation failed:', error);
+      return {
+        status: 'error',
+        error: error.message,
+      };
+    }
+  }
+
+  private async validateModules(preset: string, modules: string[]): Promise<void> {
+    const modulesPath = path.join(this.templatesPath, 'presets', preset, 'modules');
+
+    // Check all modules exist
+    for (const moduleName of modules) {
+      const modulePath = path.join(modulesPath, moduleName);
+      if (!await fs.pathExists(modulePath)) {
+        throw new BadRequestException(`Module '${moduleName}' not found in preset '${preset}'`);
+      }
+    }
+
+    // Load all module metadata and check conflicts
+    const modulesMeta: ModuleMeta[] = [];
+    for (const moduleName of modules) {
+      const metaPath = path.join(modulesPath, moduleName, 'meta.json');
+      if (await fs.pathExists(metaPath)) {
+        const meta = await fs.readJson(metaPath);
+        modulesMeta.push(meta);
+      }
+    }
+
+    // Check for conflicts
+    for (const meta of modulesMeta) {
+      if (meta.conflicts) {
+        const conflictingModules = meta.conflicts.filter(conflict => modules.includes(conflict));
+        if (conflictingModules.length > 0) {
+          throw new BadRequestException(
+            `Module '${meta.name}' conflicts with: ${conflictingModules.join(', ')}`
+          );
+        }
+      }
+    }
+  }
+
+  private async assembleProject(options: {
+    presetPath: string;
+    modules: string[];
+    workDir: string;
+    context: Record<string, any>;
+  }): Promise<{ envRequired: string[] }> {
+    const { presetPath, modules, workDir, context } = options;
+
+    // Copy base preset files
+    const basePath = path.join(presetPath, 'base');
+    await this.copyAndRender(basePath, workDir, context);
+
+    // Load base package.json
+    const packagePath = path.join(workDir, 'package.json');
+    let packageJson = await fs.readJson(packagePath).catch(() => ({}));
+
+    const envSet = new Set<string>();
+    const modulesPath = path.join(presetPath, 'modules');
+
+    // Process each module
+    for (const moduleName of modules) {
+      const moduleDir = path.join(modulesPath, moduleName);
+      const metaPath = path.join(moduleDir, 'meta.json');
+
+      if (await fs.pathExists(metaPath)) {
+        const meta: ModuleMeta = await fs.readJson(metaPath);
+
+        // Copy module files
+        const filesDir = path.join(moduleDir, meta.filesPath || 'files');
+        if (await fs.pathExists(filesDir)) {
+          await this.copyAndRender(filesDir, workDir, context);
+        }
+
+        // Merge dependencies
+        if (meta.deps) {
+          packageJson.dependencies = { ...packageJson.dependencies, ...meta.deps };
+        }
+        if (meta.devDeps) {
+          packageJson.devDependencies = { ...packageJson.devDependencies, ...meta.devDeps };
+        }
+
+        // Collect environment variables
+        if (meta.env) {
+          meta.env.forEach(envVar => envSet.add(envVar));
+        }
+
+        // Apply injections
+        if (meta.inject) {
+          await this.applyInjections(workDir, meta.inject);
+        }
+      }
+    }
+
+    // Write updated package.json
+    await fs.writeJson(packagePath, packageJson, { spaces: 2 });
+
+    // Write project metadata
+    const projectMeta = {
+      generatedAt: new Date().toISOString(),
+      preset: path.basename(presetPath),
+      modules,
+      envRequired: Array.from(envSet),
+    };
+    await fs.writeJson(path.join(workDir, 'meta.json'), projectMeta, { spaces: 2 });
+
+    return { envRequired: Array.from(envSet) };
+  }
+
+  private async copyAndRender(srcDir: string, destDir: string, context: Record<string, any>): Promise<void> {
+    const files = await globby(['**/*', '**/.*'], {
+      cwd: srcDir,
+      dot: true,
+      onlyFiles: true,
+      gitignore: true,
+    });
+
+    for (const file of files) {
+      const srcFile = path.join(srcDir, file);
+      const destFile = path.join(destDir, file);
+
+      await fs.ensureDir(path.dirname(destFile));
+
+      // Check if file is binary
+      const stats = await fs.stat(srcFile);
+      if (stats.size > 1024 * 1024) { // Skip files larger than 1MB
+        await fs.copy(srcFile, destFile);
+        continue;
+      }
+
+      try {
+        const content = await fs.readFile(srcFile, 'utf8');
+        const rendered = Handlebars.compile(content)(context);
+        await fs.writeFile(destFile, rendered, 'utf8');
+      } catch (error) {
+        // If it fails to read as text, copy as binary
+        await fs.copy(srcFile, destFile);
+      }
+    }
+  }
+
+  private async applyInjections(workDir: string, injections: Record<string, any>): Promise<void> {
+    for (const [targetFile, injection] of Object.entries(injections)) {
+      const filePath = path.join(workDir, targetFile);
+
+      if (await fs.pathExists(filePath)) {
+        let content = await fs.readFile(filePath, 'utf8');
+
+        // Apply import injections
+        if (injection.import && Array.isArray(injection.import)) {
+          const importLines = injection.import.join('\n');
+          content = content.replace(
+            '// MODULE_IMPORTS_PLACEHOLDER',
+            `${importLines}\n// MODULE_IMPORTS_PLACEHOLDER`
+          );
+        }
+
+        // Apply register injections
+        if (injection.register && Array.isArray(injection.register)) {
+          const registerLines = injection.register.map(reg => `    ${reg},`).join('\n');
+          content = content.replace(
+            '    // MODULE_REGISTER_PLACEHOLDER',
+            `${registerLines}\n    // MODULE_REGISTER_PLACEHOLDER`
+          );
+        }
+
+        await fs.writeFile(filePath, content, 'utf8');
+      }
+    }
+  }
+
+  async getPresets(): Promise<any[]> {
+    const presetsPath = path.join(this.templatesPath, 'presets');
+    const presetDirs = await fs.readdir(presetsPath);
+
+    const presets = [];
+    for (const presetDir of presetDirs) {
+      const presetPath = path.join(presetsPath, presetDir);
+      const stat = await fs.stat(presetPath);
+
+      if (stat.isDirectory()) {
+        const modulesPath = path.join(presetPath, 'modules');
+        const modules = [];
+
+        if (await fs.pathExists(modulesPath)) {
+          const moduleDirs = await fs.readdir(modulesPath);
+
+          for (const moduleDir of moduleDirs) {
+            const modulePath = path.join(modulesPath, moduleDir);
+            const metaPath = path.join(modulePath, 'meta.json');
+
+            if (await fs.pathExists(metaPath)) {
+              const meta = await fs.readJson(metaPath);
+              modules.push({
+                name: meta.name,
+                description: meta.description,
+                conflicts: meta.conflicts || [],
+              });
+            }
+          }
+        }
+
+        presets.push({
+          name: presetDir,
+          description: `${presetDir} preset`,
+          modules,
+        });
+      }
+    }
+
+    return presets;
+  }
+}

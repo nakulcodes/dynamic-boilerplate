@@ -1,0 +1,21 @@
+{
+  "name": "mail-resend",
+  "description": "Email service using Resend for sending transactional emails",
+  "deps": {
+    "resend": "^4.0.0"
+  },
+  "devDeps": {},
+  "env": [
+    "RESEND_API_KEY",
+    "MAIL_FROM"
+  ],
+  "filesPath": "files",
+  "conflicts": ["mail-smtp"],
+  "inject": {
+    "src/app.module.ts": {
+      "import": ["import { MailModule } from '@modules/mail/mail.module';"],
+      "register": ["MailModule"]
+    }
+  },
+  "postInstall": []
+}

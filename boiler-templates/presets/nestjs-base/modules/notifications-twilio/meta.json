@@ -1,0 +1,23 @@
+{
+  "name": "notifications-twilio",
+  "description": "Twilio integration for SMS, WhatsApp messages, and voice calls",
+  "deps": {
+    "twilio": "^4.0.0"
+  },
+  "devDeps": {},
+  "env": [
+    "TWILIO_ACCOUNT_SID",
+    "TWILIO_AUTH_TOKEN",
+    "TWILIO_PHONE_NUMBER",
+    "TWILIO_WHATSAPP_NUMBER"
+  ],
+  "filesPath": "files",
+  "conflicts": [],
+  "inject": {
+    "src/app.module.ts": {
+      "import": ["import { NotificationsModule } from '@modules/notifications/notifications.module';"],
+      "register": ["NotificationsModule"]
+    }
+  },
+  "postInstall": []
+}

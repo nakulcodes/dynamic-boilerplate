@@ -1,0 +1,24 @@
+{
+  "name": "google-oauth",
+  "description": "Google OAuth2 authentication integration",
+  "deps": {
+    "passport-google-oauth20": "^2.0.0",
+    "@nestjs/passport": "^10.0.0",
+    "googleapis": "^128.0.0"
+  },
+  "devDeps": {},
+  "env": [
+    "GOOGLE_CLIENT_ID",
+    "GOOGLE_CLIENT_SECRET",
+    "GOOGLE_CALLBACK_URL"
+  ],
+  "filesPath": "files",
+  "conflicts": [],
+  "inject": {
+    "src/modules/auth/auth.module.ts": {
+      "import": ["import { GoogleOAuthModule } from './google-oauth/google-oauth.module';"],
+      "register": ["GoogleOAuthModule"]
+    }
+  },
+  "postInstall": []
+}

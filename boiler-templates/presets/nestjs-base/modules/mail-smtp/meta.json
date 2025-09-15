@@ -1,0 +1,26 @@
+{
+  "name": "mail-smtp",
+  "description": "Email service using SMTP for sending transactional emails",
+  "deps": {
+    "nodemailer": "^6.9.0"
+  },
+  "devDeps": {
+    "@types/nodemailer": "^6.4.0"
+  },
+  "env": [
+    "SMTP_HOST",
+    "SMTP_PORT",
+    "SMTP_USER",
+    "SMTP_PASS",
+    "MAIL_FROM"
+  ],
+  "filesPath": "files",
+  "conflicts": ["mail-resend"],
+  "inject": {
+    "src/app.module.ts": {
+      "import": ["import { MailModule } from '@modules/mail/mail.module';"],
+      "register": ["MailModule"]
+    }
+  },
+  "postInstall": []
+}

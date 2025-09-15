@@ -1,0 +1,23 @@
+{
+  "name": "github-oauth",
+  "description": "GitHub OAuth2 authentication integration",
+  "deps": {
+    "passport-github2": "^0.1.12",
+    "@nestjs/passport": "^10.0.0"
+  },
+  "devDeps": {},
+  "env": [
+    "GITHUB_CLIENT_ID",
+    "GITHUB_CLIENT_SECRET",
+    "GITHUB_CALLBACK_URL"
+  ],
+  "filesPath": "files",
+  "conflicts": [],
+  "inject": {
+    "src/modules/auth/auth.module.ts": {
+      "import": ["import { GitHubOAuthModule } from './github-oauth/github-oauth.module';"],
+      "register": ["GitHubOAuthModule"]
+    }
+  },
+  "postInstall": []
+}

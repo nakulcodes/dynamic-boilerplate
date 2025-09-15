@@ -1,0 +1,23 @@
+{
+  "name": "outlook-oauth",
+  "description": "Microsoft/Outlook OAuth2 authentication integration",
+  "deps": {
+    "passport-microsoft": "^1.0.0",
+    "@nestjs/passport": "^10.0.0"
+  },
+  "devDeps": {},
+  "env": [
+    "MICROSOFT_CLIENT_ID",
+    "MICROSOFT_CLIENT_SECRET",
+    "MICROSOFT_CALLBACK_URL"
+  ],
+  "filesPath": "files",
+  "conflicts": [],
+  "inject": {
+    "src/modules/auth/auth.module.ts": {
+      "import": ["import { OutlookOAuthModule } from './outlook-oauth/outlook-oauth.module';"],
+      "register": ["OutlookOAuthModule"]
+    }
+  },
+  "postInstall": []
+}

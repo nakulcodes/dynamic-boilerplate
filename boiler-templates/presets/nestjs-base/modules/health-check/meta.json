@@ -1,0 +1,20 @@
+{
+  "name": "health-check",
+  "description": "Health check endpoints with database, memory, and Kubernetes probes",
+  "deps": {
+    "@nestjs/terminus": "^10.0.0",
+    "@nestjs/axios": "^3.0.0",
+    "axios": "^1.4.0"
+  },
+  "devDeps": {},
+  "env": [],
+  "filesPath": "files",
+  "conflicts": [],
+  "inject": {
+    "src/app.module.ts": {
+      "import": ["import { HealthModule } from '@modules/health/health.module';"],
+      "register": ["HealthModule"]
+    }
+  },
+  "postInstall": []
+}

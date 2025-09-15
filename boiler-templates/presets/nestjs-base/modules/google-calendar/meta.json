@@ -1,0 +1,21 @@
+{
+  "name": "google-calendar",
+  "description": "Google Calendar API integration for event management",
+  "deps": {
+    "googleapis": "^128.0.0"
+  },
+  "devDeps": {},
+  "env": [
+    "GOOGLE_CLIENT_ID",
+    "GOOGLE_CLIENT_SECRET"
+  ],
+  "filesPath": "files",
+  "conflicts": [],
+  "inject": {
+    "src/app.module.ts": {
+      "import": ["import { GoogleCalendarModule } from './integrations/google-calendar/google-calendar.module';"],
+      "register": ["GoogleCalendarModule"]
+    }
+  },
+  "postInstall": []
+}

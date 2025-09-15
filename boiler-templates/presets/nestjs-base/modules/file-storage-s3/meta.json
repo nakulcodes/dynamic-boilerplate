@@ -1,0 +1,29 @@
+{
+  "name": "file-storage-s3",
+  "description": "AWS S3 file storage service with upload, download, and management capabilities",
+  "deps": {
+    "@aws-sdk/client-s3": "^3.0.0",
+    "@aws-sdk/s3-request-presigner": "^3.0.0",
+    "@nestjs/platform-express": "^10.0.0",
+    "uuid": "^9.0.0"
+  },
+  "devDeps": {
+    "@types/uuid": "^9.0.0",
+    "@types/multer": "^1.4.7"
+  },
+  "env": [
+    "AWS_ACCESS_KEY_ID",
+    "AWS_SECRET_ACCESS_KEY",
+    "AWS_S3_BUCKET",
+    "AWS_REGION"
+  ],
+  "filesPath": "files",
+  "conflicts": [],
+  "inject": {
+    "src/app.module.ts": {
+      "import": ["import { FilesModule } from '@modules/files/files.module';"],
+      "register": ["FilesModule"]
+    }
+  },
+  "postInstall": []
+}
