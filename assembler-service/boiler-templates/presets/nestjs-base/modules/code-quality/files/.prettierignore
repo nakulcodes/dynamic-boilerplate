@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# Build output
+dist/
+build/
+.next/
+
+# Coverage reports
+coverage/
+*.lcov
+
+# Logs
+*.log
+logs/
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env*
+!.env.example
+
+# Generated files
+*.generated.ts
+*.generated.js
+
+# Documentation build
+docs/build/
+
+# Temporary files
+tmp/
+temp/

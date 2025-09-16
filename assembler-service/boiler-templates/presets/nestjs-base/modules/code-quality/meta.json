@@ -1,0 +1,39 @@
+{
+  "name": "code-quality",
+  "description": "Code quality tools with ESLint, Prettier, Husky, and lint-staged for consistent code formatting and quality",
+  "category": "development",
+  "required": false,
+  "deps": {},
+  "devDeps": {
+    "@typescript-eslint/eslint-plugin": "^8.8.0",
+    "@typescript-eslint/parser": "^8.8.0",
+    "eslint": "^9.11.1",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.30.0",
+    "eslint-plugin-nestjs": "^1.0.3",
+    "eslint-plugin-prettier": "^5.2.1",
+    "prettier": "^3.3.3",
+    "husky": "^9.1.6",
+    "lint-staged": "^15.2.10",
+    "commitizen": "^4.3.1",
+    "cz-conventional-changelog": "^3.3.0",
+    "@commitlint/cli": "^19.5.0",
+    "@commitlint/config-conventional": "^19.5.0"
+  },
+  "env": [],
+  "routes": [],
+  "dependsOn": [],
+  "optionalDeps": [],
+  "qualityChecklist": [
+    "unit-tests",
+    "README"
+  ],
+  "filesPath": "files",
+  "conflicts": [],
+  "inject": {},
+  "postInstall": [
+    "npx husky init",
+    "echo 'npx lint-staged' > .husky/pre-commit",
+    "echo 'npx --no-install commitlint --edit' > .husky/commit-msg"
+  ]
+}

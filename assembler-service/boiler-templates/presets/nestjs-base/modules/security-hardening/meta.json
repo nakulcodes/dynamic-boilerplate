@@ -1,0 +1,58 @@
+{
+  "name": "security-hardening",
+  "description": "Production security hardening with Helmet, rate limiting, CORS, and request sanitization",
+  "category": "security",
+  "required": false,
+  "deps": {
+    "@nestjs/throttler": "^6.2.1",
+    "helmet": "^8.0.0",
+    "express-rate-limit": "^7.4.1",
+    "express-mongo-sanitize": "^2.2.0",
+    "hpp": "^0.2.3"
+  },
+  "devDeps": {},
+  "env": [
+    {
+      "key": "RATE_LIMIT_TTL",
+      "required": false,
+      "example": "60000"
+    },
+    {
+      "key": "RATE_LIMIT_MAX",
+      "required": false,
+      "example": "100"
+    },
+    {
+      "key": "CORS_ORIGINS",
+      "required": false,
+      "example": "http://localhost:3000,https://yourdomain.com"
+    },
+    {
+      "key": "HELMET_CSP_ENABLED",
+      "required": false,
+      "example": "true"
+    }
+  ],
+  "routes": [],
+  "dependsOn": ["config"],
+  "optionalDeps": [],
+  "qualityChecklist": [
+    "unit-tests",
+    "e2e-tests",
+    "README",
+    "openapi"
+  ],
+  "filesPath": "files",
+  "conflicts": [],
+  "inject": {
+    "src/app.module.ts": {
+      "import": [
+        "import { SecurityModule } from './modules/security/security.module';"
+      ],
+      "register": [
+        "SecurityModule"
+      ]
+    }
+  },
+  "postInstall": []
+}
