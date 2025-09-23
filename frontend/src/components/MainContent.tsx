@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PresetSelector } from "./PresetSelector";
-import { ModuleSelector } from "./ModuleSelector";
+import { SteppedModuleSelector } from "./SteppedModuleSelector";
 import { ProjectConfig } from "./ProjectConfig";
 import { FileTreePreview } from "./FileTreePreview";
 import { GenerateButton } from "./GenerateButton";
@@ -121,7 +121,10 @@ export function MainContent() {
   };
 
   const currentPreset = presets.find((p) => p.name === selectedPreset);
-  const canGenerate = projectName.trim() && selectedPreset;
+  const canGenerate = useMemo(() => {
+    return Boolean(projectName && projectName.trim() && selectedPreset);
+  }, [projectName, selectedPreset]);
+
 
   if (loading) {
     return (
@@ -259,7 +262,7 @@ export function MainContent() {
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.3, delay: 0.2 }}
                   >
-                    <ModuleSelector
+                    <SteppedModuleSelector
                       modules={currentPreset.modules}
                       selectedModules={selectedModules}
                       onModuleChange={setSelectedModules}
