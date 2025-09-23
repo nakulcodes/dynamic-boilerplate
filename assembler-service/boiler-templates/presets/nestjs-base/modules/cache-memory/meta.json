@@ -27,5 +27,16 @@
       "register": ["CacheModule"]
     }
   },
+  "fileStructure": [
+    {
+      "name": "cache",
+      "type": "folder",
+      "path": "src/modules/cache",
+      "children": [
+        { "name": "cache.module.ts", "type": "file" },
+        { "name": "cache.service.ts", "type": "file" }
+      ]
+    }
+  ],
   "postInstall": []
 }

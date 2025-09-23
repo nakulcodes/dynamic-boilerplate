@@ -124,6 +124,104 @@
       ]
     }
   },
+  "fileStructure": [
+    {
+      "name": "role",
+      "type": "folder",
+      "path": "src/modules/role",
+      "children": [
+        {
+          "name": "dto",
+          "type": "folder",
+          "children": [
+            {
+              "name": "request",
+              "type": "folder",
+              "children": [
+                { "name": "create-role.dto.ts", "type": "file" },
+                { "name": "update-role.dto.ts", "type": "file" }
+              ]
+            },
+            {
+              "name": "response",
+              "type": "folder",
+              "children": [
+                { "name": "paginated-roles.dto.ts", "type": "file" },
+                { "name": "permissions.dto.ts", "type": "file" },
+                { "name": "role-response.dto.ts", "type": "file" },
+                { "name": "role.dto.ts", "type": "file" }
+              ]
+            }
+          ]
+        },
+        { "name": "role.controller.ts", "type": "file" },
+        { "name": "role.module.ts", "type": "file" },
+        { "name": "role.service.ts", "type": "file" }
+      ]
+    },
+    {
+      "name": "permission",
+      "type": "folder",
+      "path": "src/modules/permission",
+      "children": [
+        { "name": "permission.controller.ts", "type": "file" },
+        { "name": "permission.module.ts", "type": "file" },
+        { "name": "permission.service.ts", "type": "file" }
+      ]
+    },
+    {
+      "name": "decorators",
+      "type": "folder",
+      "path": "src/common/decorators",
+      "children": [
+        { "name": "permissions.decorator.ts", "type": "file" }
+      ]
+    },
+    {
+      "name": "guards",
+      "type": "folder",
+      "path": "src/common/guards",
+      "children": [
+        { "name": "rbac.guard.ts", "type": "file" }
+      ]
+    },
+    {
+      "name": "rbac",
+      "type": "folder",
+      "path": "src/common/rbac",
+      "children": [
+        { "name": "index.ts", "type": "file" },
+        { "name": "permissions.ts", "type": "file" },
+        { "name": "roles.ts", "type": "file" }
+      ]
+    },
+    {
+      "name": "types",
+      "type": "folder",
+      "path": "src/common/types",
+      "children": [
+        { "name": "user.types.ts", "type": "file" }
+      ]
+    },
+    {
+      "name": "role.entity.ts",
+      "type": "file",
+      "path": "src/database/entities"
+    },
+    {
+      "name": "role.repository.ts",
+      "type": "file",
+      "path": "src/database/repositories"
+    },
+    {
+      "name": "seeds",
+      "type": "folder",
+      "path": "src/db/seeds",
+      "children": [
+        { "name": "rbac.seed.ts", "type": "file" }
+      ]
+    }
+  ],
   "postInstall": [
     "npm run migration:generate -- RbacInitial",
     "npm run migration:run",

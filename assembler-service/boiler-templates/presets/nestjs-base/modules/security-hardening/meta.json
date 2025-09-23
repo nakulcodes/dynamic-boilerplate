@@ -54,5 +54,25 @@
       ]
     }
   },
+  "fileStructure": [
+    { "name": "main.ts", "type": "file", "path": "src" },
+    {
+      "name": "security",
+      "type": "folder",
+      "path": "src/modules/security",
+      "children": [
+        {
+          "name": "interceptors",
+          "type": "folder",
+          "children": [
+            { "name": "security.interceptor.ts", "type": "file" }
+          ]
+        },
+        { "name": "security.controller.ts", "type": "file" },
+        { "name": "security.module.ts", "type": "file" },
+        { "name": "security.service.ts", "type": "file" }
+      ]
+    }
+  ],
   "postInstall": []
 }

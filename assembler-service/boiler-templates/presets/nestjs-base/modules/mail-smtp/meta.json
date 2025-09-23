@@ -33,5 +33,58 @@
       "register": ["MailModule"]
     }
   },
+  "fileStructure": [
+    {
+      "name": "mail",
+      "type": "folder",
+      "path": "src/modules/mail",
+      "children": [
+        {
+          "name": "dto",
+          "type": "folder",
+          "children": [
+            { "name": "index.ts", "type": "file" },
+            {
+              "name": "request",
+              "type": "folder",
+              "children": [
+                { "name": "password-reset-email.dto.ts", "type": "file" },
+                { "name": "verification-email.dto.ts", "type": "file" },
+                { "name": "welcome-email.dto.ts", "type": "file" }
+              ]
+            },
+            {
+              "name": "response",
+              "type": "folder",
+              "children": [
+                { "name": "email-send.response.dto.ts", "type": "file" }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "services",
+          "type": "folder",
+          "children": [
+            { "name": "template.service.ts", "type": "file" }
+          ]
+        },
+        { "name": "send-email.dto.ts", "type": "file" },
+        { "name": "mail.controller.ts", "type": "file" },
+        { "name": "mail.module.ts", "type": "file" },
+        { "name": "mail.service.ts", "type": "file" }
+      ]
+    },
+    {
+      "name": "template.entity.ts",
+      "type": "file",
+      "path": "src/database/entities"
+    },
+    {
+      "name": "template.repository.ts",
+      "type": "file",
+      "path": "src/database/repositories"
+    }
+  ],
   "postInstall": []
 }

@@ -28,5 +28,18 @@
       "register": ["OutlookOAuthModule"]
     }
   },
+  "fileStructure": [
+    {
+      "name": "outlook-oauth",
+      "type": "folder",
+      "path": "src/modules/auth/outlook-oauth",
+      "children": [
+        { "name": "outlook-oauth.module.ts", "type": "file" },
+        { "name": "outlook-oauth.service.ts", "type": "file" },
+        { "name": "outlook-oauth.controller.ts", "type": "file" },
+        { "name": "microsoft.strategy.ts", "type": "file" }
+      ]
+    }
+  ],
   "postInstall": []
 }

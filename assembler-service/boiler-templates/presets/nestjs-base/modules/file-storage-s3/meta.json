@@ -36,5 +36,46 @@
       "register": ["FilesModule"]
     }
   },
+  "fileStructure": [
+    {
+      "name": "files",
+      "type": "folder",
+      "path": "src/modules/files",
+      "children": [
+        {
+          "name": "dto",
+          "type": "folder",
+          "children": [
+            { "name": "index.ts", "type": "file" },
+            {
+              "name": "request",
+              "type": "folder",
+              "children": [
+                { "name": "download-url.dto.ts", "type": "file" },
+                { "name": "upload-file.dto.ts", "type": "file" },
+                { "name": "upload-url.dto.ts", "type": "file" },
+                { "name": "validate-file.dto.ts", "type": "file" }
+              ]
+            },
+            {
+              "name": "response",
+              "type": "folder",
+              "children": [
+                { "name": "download-url.response.dto.ts", "type": "file" },
+                { "name": "file-delete.response.dto.ts", "type": "file" },
+                { "name": "file-metadata.response.dto.ts", "type": "file" },
+                { "name": "file-upload.response.dto.ts", "type": "file" },
+                { "name": "file-validation.response.dto.ts", "type": "file" },
+                { "name": "upload-url.response.dto.ts", "type": "file" }
+              ]
+            }
+          ]
+        },
+        { "name": "files.controller.ts", "type": "file" },
+        { "name": "files.module.ts", "type": "file" },
+        { "name": "files.service.ts", "type": "file" }
+      ]
+    }
+  ],
   "postInstall": []
 }

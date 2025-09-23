@@ -30,5 +30,49 @@
       "register": ["NotificationsModule"]
     }
   },
+  "fileStructure": [
+    {
+      "name": "notifications",
+      "type": "folder",
+      "path": "src/modules/notifications",
+      "children": [
+        {
+          "name": "dto",
+          "type": "folder",
+          "children": [
+            { "name": "index.ts", "type": "file" },
+            {
+              "name": "request",
+              "type": "folder",
+              "children": [
+                { "name": "bulk-sms.dto.ts", "type": "file" },
+                { "name": "list-calls.dto.ts", "type": "file" },
+                { "name": "list-messages.dto.ts", "type": "file" },
+                { "name": "make-call.dto.ts", "type": "file" },
+                { "name": "send-sms.dto.ts", "type": "file" },
+                { "name": "send-whatsapp.dto.ts", "type": "file" },
+                { "name": "validate-phone.dto.ts", "type": "file" }
+              ]
+            },
+            {
+              "name": "response",
+              "type": "folder",
+              "children": [
+                { "name": "bulk-sms.response.dto.ts", "type": "file" },
+                { "name": "call-list.response.dto.ts", "type": "file" },
+                { "name": "call.response.dto.ts", "type": "file" },
+                { "name": "message-list.response.dto.ts", "type": "file" },
+                { "name": "notification.response.dto.ts", "type": "file" },
+                { "name": "phone-validation.response.dto.ts", "type": "file" }
+              ]
+            }
+          ]
+        },
+        { "name": "notifications.controller.ts", "type": "file" },
+        { "name": "notifications.module.ts", "type": "file" },
+        { "name": "notifications.service.ts", "type": "file" }
+      ]
+    }
+  ],
   "postInstall": []
 }

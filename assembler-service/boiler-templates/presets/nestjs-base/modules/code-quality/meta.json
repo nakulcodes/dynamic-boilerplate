@@ -31,6 +31,23 @@
   "filesPath": "files",
   "conflicts": [],
   "inject": {},
+  "fileStructure": [
+    { "name": ".eslintrc.js", "type": "file", "path": "." },
+    { "name": ".prettierrc", "type": "file", "path": "." },
+    { "name": ".prettierignore", "type": "file", "path": "." },
+    { "name": ".lintstagedrc.json", "type": "file", "path": "." },
+    { "name": "commitlint.config.js", "type": "file", "path": "." },
+    { "name": "package.json", "type": "file", "path": "." },
+    {
+      "name": ".vscode",
+      "type": "folder",
+      "path": ".vscode",
+      "children": [
+        { "name": "extensions.json", "type": "file" },
+        { "name": "settings.json", "type": "file" }
+      ]
+    }
+  ],
   "postInstall": [
     "npx husky init",
     "echo 'npx lint-staged' > .husky/pre-commit",

@@ -1,14 +1,24 @@
 {
   "name": "google-calendar",
   "description": "Google Calendar API integration for event management",
+  "category": "integration",
+  "required": false,
   "deps": {
     "googleapis": "^128.0.0"
   },
   "devDeps": {},
   "env": [
-    "GOOGLE_CLIENT_ID",
-    "GOOGLE_CLIENT_SECRET"
+    { "key": "GOOGLE_CLIENT_ID", "required": true, "example": "your-google-client-id.apps.googleusercontent.com" },
+    { "key": "GOOGLE_CLIENT_SECRET", "required": true, "example": "your-google-client-secret" }
   ],
+  "routes": [
+    "/google-calendar/events",
+    "/google-calendar/events/:id",
+    "/google-calendar/calendars"
+  ],
+  "dependsOn": ["config"],
+  "optionalDeps": [],
+  "qualityChecklist": ["unit-tests", "integration-tests", "README", "openapi"],
   "filesPath": "files",
   "conflicts": [],
   "inject": {
@@ -17,5 +27,17 @@
       "register": ["GoogleCalendarModule"]
     }
   },
+  "fileStructure": [
+    {
+      "name": "google-calendar",
+      "type": "folder",
+      "path": "src/integrations/google-calendar",
+      "children": [
+        { "name": "google-calendar.controller.ts", "type": "file" },
+        { "name": "google-calendar.module.ts", "type": "file" },
+        { "name": "google-calendar.service.ts", "type": "file" }
+      ]
+    }
+  ],
   "postInstall": []
 }

@@ -27,5 +27,16 @@
       "register": ["HealthModule"]
     }
   },
+  "fileStructure": [
+    {
+      "name": "health",
+      "type": "folder",
+      "path": "src/modules/health",
+      "children": [
+        { "name": "health.controller.ts", "type": "file" },
+        { "name": "health.module.ts", "type": "file" }
+      ]
+    }
+  ],
   "postInstall": []
 }

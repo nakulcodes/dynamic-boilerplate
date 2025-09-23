@@ -28,5 +28,18 @@
       "register": ["GitHubOAuthModule"]
     }
   },
+  "fileStructure": [
+    {
+      "name": "github-oauth",
+      "type": "folder",
+      "path": "src/modules/auth/github-oauth",
+      "children": [
+        { "name": "github-oauth.module.ts", "type": "file" },
+        { "name": "github-oauth.service.ts", "type": "file" },
+        { "name": "github-oauth.controller.ts", "type": "file" },
+        { "name": "github.strategy.ts", "type": "file" }
+      ]
+    }
+  ],
   "postInstall": []
 }
