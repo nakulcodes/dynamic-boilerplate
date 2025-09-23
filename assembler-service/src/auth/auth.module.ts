@@ -6,7 +6,6 @@ import { AuthController } from './auth.controller';
 import { GoogleOAuthStrategy } from './google-oauth.strategy';
 import { AuthService } from './auth.service';
 import { UserRepository } from '@db/repositories/user.repository';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Module({
   imports: [
@@ -24,7 +23,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
     ConfigModule,
   ],
   controllers: [AuthController],
-  providers: [GoogleOAuthStrategy, AuthService, UserRepository, JwtAuthGuard],
-  exports: [GoogleOAuthStrategy, AuthService, JwtAuthGuard],
+  providers: [GoogleOAuthStrategy, AuthService, UserRepository],
+  exports: [GoogleOAuthStrategy, AuthService],
 })
 export class AuthModule {}

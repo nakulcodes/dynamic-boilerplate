@@ -1,6 +1,6 @@
 {
   "name": "config",
-  "description": "Centralized typed configuration loader with Zod validation for all modules",
+  "description": "Simplified configuration module with basic validation and environment management",
   "category": "core",
   "required": true,
   "deps": {
@@ -10,7 +10,7 @@
   "env": [
     { "key": "NODE_ENV", "required": false, "example": "development" },
     { "key": "PORT", "required": false, "example": "3000" },
-    { "key": "APP_NAME", "required": false, "example": "My NestJS App" },
+    { "key": "APP_NAME", "required": false, "example": "{{projectName}}" },
     { "key": "API_PREFIX", "required": false, "example": "api" },
     { "key": "CORS_ENABLED", "required": false, "example": "true" },
     { "key": "CORS_ORIGIN", "required": false, "example": "http://localhost:3000" }
@@ -23,20 +23,22 @@
   "conflicts": [],
   "inject": {
     "src/app.module.ts": {
-      "import": ["import { ConfigModule } from '@modules/config/config.module';"],
-      "register": ["ConfigModule"]
+      "import": ["import { AppConfigModule } from '@config/config.module';"],
+      "register": ["AppConfigModule"]
     }
   },
   "fileStructure": [
     {
       "name": "config",
       "type": "folder",
-      "path": "src/modules/config",
+      "path": "src/config",
       "children": [
         { "name": "config.module.ts", "type": "file" },
         { "name": "config.service.ts", "type": "file" },
         { "name": "config.schema.ts", "type": "file" },
-        { "name": "config.factory.ts", "type": "file" }
+        { "name": "config.validation.ts", "type": "file" },
+        { "name": "configuration.ts", "type": "file" },
+        { "name": "index.ts", "type": "file" }
       ]
     }
   ],
