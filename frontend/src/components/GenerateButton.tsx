@@ -27,6 +27,8 @@ export const GenerateButton: React.FC<GenerateButtonProps> = ({
 }) => {
   const [isGenerating, setIsGenerating] = useState(false);
 
+  console.log('GenerateButton render:', { disabled, envRequired, isGenerating });
+
   const handleGenerate = async () => {
     setIsGenerating(true);
     try {
@@ -37,50 +39,35 @@ export const GenerateButton: React.FC<GenerateButtonProps> = ({
   };
 
   return (
-    <Card className="glass-card border-zinc-800/50 overflow-hidden">
+    <div className="space-y-6">
       {/* Environment Variables Section */}
-      <AnimatePresence>
-        {envRequired.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="p-6 border-b border-zinc-800/50"
-          >
-            <div className="flex items-center space-x-2 mb-4">
-              <AlertCircle className="h-4 w-4 text-yellow-500" />
-              <h4 className="text-sm font-semibold text-zinc-50">
-                Required Environment Variables
-              </h4>
-            </div>
+      {envRequired.length > 0 && (
+        <Card className="glass-card border-zinc-800/50 p-6">
+          <div className="flex items-center space-x-2 mb-4">
+            <AlertCircle className="h-4 w-4 text-yellow-500" />
+            <h4 className="text-sm font-semibold text-zinc-50">
+              Required Environment Variables
+            </h4>
+          </div>
+          <div className="flex flex-wrap gap-2 mb-3">
+            {envRequired.map((env) => (
+              <Badge
+                key={env}
+                variant="secondary"
+                className="font-mono text-xs bg-yellow-500/10 text-yellow-600 border border-yellow-500/20"
+              >
+                {env}
+              </Badge>
+            ))}
+          </div>
+          <p className="text-xs text-zinc-400">
+            These variables will be included in your generated project's <code className="bg-zinc-800 px-1 py-0.5 rounded text-xs">.env.example</code> file
+          </p>
+        </Card>
+      )}
 
-            <div className="flex flex-wrap gap-2 mb-3">
-              {envRequired.map((env, index) => (
-                <motion.div
-                  key={env}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.2, delay: index * 0.05 }}
-                >
-                  <Badge
-                    variant="secondary"
-                    className="font-mono text-xs bg-yellow-500/10 text-yellow-600 border border-yellow-500/20"
-                  >
-                    {env}
-                  </Badge>
-                </motion.div>
-              ))}
-            </div>
-
-            <p className="text-xs text-zinc-400">
-              These variables will be included in your generated project's <code className="bg-zinc-800 px-1 py-0.5 rounded text-xs">.env.example</code> file
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Generation Section */}
-      <div className="p-6">
+      {/* Generate Button Section */}
+      <Card className="glass-card border-zinc-800/50 p-6">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <div className="flex items-center space-x-2">
@@ -92,67 +79,41 @@ export const GenerateButton: React.FC<GenerateButtonProps> = ({
             </p>
           </div>
 
-          <motion.div
-            whileTap={{ scale: 0.95 }}
-            whileHover={{ scale: disabled || isGenerating ? 1 : 1.02 }}
+          <button
+            onClick={handleGenerate}
+            disabled={disabled || isGenerating}
+            className={`
+              px-6 py-3 rounded-lg font-semibold text-sm
+              flex items-center space-x-2
+              transition-all duration-200
+              ${disabled || isGenerating
+                ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed opacity-50'
+                : 'bg-white text-zinc-900 hover:bg-zinc-100 shadow-lg hover:shadow-xl'
+              }
+            `}
           >
-            <Button
-              onClick={handleGenerate}
-              disabled={disabled || isGenerating}
-              size="lg"
-              className={`
-                relative overflow-hidden transition-all duration-300 font-semibold
-                ${!disabled && !isGenerating
-                  ? 'bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl'
-                  : ''
-                }
-              `}
-            >
-              {/* Background animation */}
-              {!disabled && !isGenerating && (
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent"
-                  animate={{
-                    x: [-100, 300],
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: "linear",
-                  }}
-                />
-              )}
-
-              <div className="relative flex items-center space-x-2">
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    <span>Generating...</span>
-                  </>
-                ) : disabled ? (
-                  <>
-                    <AlertCircle className="h-5 w-5" />
-                    <span>Complete Configuration</span>
-                  </>
-                ) : (
-                  <>
-                    <Rocket className="h-5 w-5" />
-                    <span>Generate Project</span>
-                    <Download className="h-4 w-4 ml-1" />
-                  </>
-                )}
-              </div>
-            </Button>
-          </motion.div>
+            {isGenerating ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Generating...</span>
+              </>
+            ) : disabled ? (
+              <>
+                <AlertCircle className="h-4 w-4" />
+                <span>Complete Configuration</span>
+              </>
+            ) : (
+              <>
+                <Rocket className="h-4 w-4" />
+                <span>Generate Project</span>
+                <Download className="h-4 w-4" />
+              </>
+            )}
+          </button>
         </div>
 
         {/* Status indicator */}
-        <motion.div
-          className="mt-4 flex items-center justify-center"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-        >
+        <div className="mt-4 flex items-center justify-center">
           <div className="flex items-center space-x-2 text-xs text-zinc-400">
             {disabled ? (
               <>
@@ -167,8 +128,8 @@ export const GenerateButton: React.FC<GenerateButtonProps> = ({
               </>
             )}
           </div>
-        </motion.div>
-      </div>
-    </Card>
+        </div>
+      </Card>
+    </div>
   );
 };

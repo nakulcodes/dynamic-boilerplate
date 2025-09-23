@@ -124,7 +124,9 @@ export function MainContent() {
 
   const currentPreset = presets.find((p) => p.name === selectedPreset);
   const canGenerate = useMemo(() => {
-    return Boolean(projectName && projectName.trim() && selectedPreset);
+    const result = Boolean(projectName && projectName.trim() && selectedPreset);
+    console.log('canGenerate:', result, { projectName, selectedPreset });
+    return result;
   }, [projectName, selectedPreset]);
 
 
@@ -309,6 +311,21 @@ export function MainContent() {
                     />
                   </motion.div>
                 )}
+
+                {/* Generate Button - Show after project config */}
+                {selectedModules.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.3 }}
+                  >
+                    <GenerateButton
+                      onGenerate={handleGenerate}
+                      disabled={!canGenerate}
+                      envRequired={envRequired}
+                    />
+                  </motion.div>
+                )}
             </motion.div>
 
             {/* Preview Panel */}
@@ -327,20 +344,6 @@ export function MainContent() {
               </div>
             </motion.div>
           </div>
-
-          {/* Generate Button */}
-          <motion.div
-            className="mt-12"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-          >
-            <GenerateButton
-              onGenerate={handleGenerate}
-              disabled={!canGenerate}
-              envRequired={envRequired}
-            />
-          </motion.div>
               </motion.div>
             ) : (
               <motion.div

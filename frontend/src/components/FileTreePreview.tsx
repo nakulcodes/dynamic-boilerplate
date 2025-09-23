@@ -53,8 +53,8 @@ export const FileTreePreview: React.FC<FileTreePreviewProps> = ({
   const getFileTree = (): FileItem[] => {
     if (!selectedPreset) return [];
 
-    // Base structure for NestJS
-    const baseFiles: FileItem[] = [
+    // Base structure for NestJS (without modules folder initially)
+    const baseFilesWithoutModules: FileItem[] = [
       { name: 'package.json', type: 'file', level: 0 },
       { name: 'tsconfig.json', type: 'file', level: 0 },
       { name: '.env.example', type: 'file', level: 0 },
@@ -65,51 +65,72 @@ export const FileTreePreview: React.FC<FileTreePreviewProps> = ({
       { name: 'app.controller.ts', type: 'file', level: 1 },
       { name: 'app.service.ts', type: 'file', level: 1 },
       { name: 'common', type: 'folder', level: 1 },
-      { name: 'modules', type: 'folder', level: 1 },
     ];
 
-    // Add module-specific files dynamically
-    const moduleFiles: FileItem[] = [];
+    // Separate arrays for different types of files
+    const databaseFiles: FileItem[] = [];
+    const moduleSpecificFiles: FileItem[] = [];
+    const modulesFolder: FileItem[] = [{ name: 'modules', type: 'folder', level: 1 }];
 
     selectedModules.forEach(moduleName => {
       const module = modules.find(m => m.name === moduleName);
       if (module && module.fileStructure) {
         module.fileStructure.forEach((structure) => {
           const pathParts = structure.path.split('/');
-          let currentLevel = 0;
 
           // Calculate the level based on the path depth (excluding 'src')
           const pathDepth = pathParts.filter(part => part && part !== 'src').length;
 
+          // Check if this is a database-related file (should go above modules)
+          const isDatabaseFile = structure.path.includes('/database/') || structure.name.includes('database');
+
           // Add the main folder structure
-          moduleFiles.push({
+          const fileItem = {
             name: structure.name,
             type: structure.type,
             level: pathDepth,
             isNew: true
-          });
+          };
+
+          if (isDatabaseFile) {
+            databaseFiles.push(fileItem);
+          } else {
+            moduleSpecificFiles.push(fileItem);
+          }
 
           // Add children files
           if (structure.children) {
             structure.children.forEach((child) => {
-              moduleFiles.push({
+              const childItem = {
                 name: child.name,
                 type: child.type,
                 level: pathDepth + 1,
                 parent: structure.name,
                 isNew: true
-              });
+              };
+
+              if (isDatabaseFile) {
+                databaseFiles.push(childItem);
+              } else {
+                moduleSpecificFiles.push(childItem);
+              }
 
               // Add nested children if they exist
               if (child.children) {
                 child.children.forEach((grandchild) => {
-                  moduleFiles.push({
+                  const grandchildItem = {
                     name: grandchild.name,
                     type: grandchild.type,
                     level: pathDepth + 2,
                     parent: child.name,
                     isNew: true
-                  });
+                  };
+
+                  if (isDatabaseFile) {
+                    databaseFiles.push(grandchildItem);
+                  } else {
+                    moduleSpecificFiles.push(grandchildItem);
+                  }
                 });
               }
             });
@@ -118,7 +139,13 @@ export const FileTreePreview: React.FC<FileTreePreviewProps> = ({
       }
     });
 
-    return [...baseFiles, ...moduleFiles];
+    // Combine in the desired order: base files, database files, modules folder, then module-specific files
+    return [
+      ...baseFilesWithoutModules,
+      ...databaseFiles,
+      ...modulesFolder,
+      ...moduleSpecificFiles
+    ];
   };
 
   const getFileIcon = (fileName: string, type: 'file' | 'folder') => {
