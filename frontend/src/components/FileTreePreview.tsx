@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -34,6 +34,22 @@ export const FileTreePreview: React.FC<FileTreePreviewProps> = ({
   selectedModules,
   modules = [],
 }) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const previousModuleCount = useRef(selectedModules.length);
+
+  // Auto-scroll to bottom when new modules are added
+  useEffect(() => {
+    if (selectedModules.length > previousModuleCount.current && scrollRef.current) {
+      const scrollElement = scrollRef.current;
+      setTimeout(() => {
+        scrollElement.scrollTo({
+          top: scrollElement.scrollHeight,
+          behavior: 'smooth'
+        });
+      }, 300); // Delay to allow animation to start
+    }
+    previousModuleCount.current = selectedModules.length;
+  }, [selectedModules.length]);
   const getFileTree = (): FileItem[] => {
     if (!selectedPreset) return [];
 
@@ -62,58 +78,42 @@ export const FileTreePreview: React.FC<FileTreePreviewProps> = ({
           const pathParts = structure.path.split('/');
           let currentLevel = 0;
 
-          // Add folder structure based on path
-          pathParts.forEach((part: string, index: number) => {
-            if (part && part !== 'src') { // Skip src as it's already in base
-              const isLast = index === pathParts.length - 1;
-              if (isLast) {
-                // This is the main folder for the module
-                moduleFiles.push({
-                  name: structure.name,
-                  type: structure.type,
-                  level: currentLevel + 1,
-                  isNew: true
-                });
+          // Calculate the level based on the path depth (excluding 'src')
+          const pathDepth = pathParts.filter(part => part && part !== 'src').length;
 
-                // Add children files
-                if (structure.children) {
-                  structure.children.forEach((child) => {
-                    moduleFiles.push({
-                      name: child.name,
-                      type: child.type,
-                      level: currentLevel + 2,
-                      parent: structure.name,
-                      isNew: true
-                    });
+          // Add the main folder structure
+          moduleFiles.push({
+            name: structure.name,
+            type: structure.type,
+            level: pathDepth,
+            isNew: true
+          });
 
-                    // Add nested children if they exist
-                    if (child.children) {
-                      child.children.forEach((grandchild) => {
-                        moduleFiles.push({
-                          name: grandchild.name,
-                          type: grandchild.type,
-                          level: currentLevel + 3,
-                          parent: child.name,
-                          isNew: true
-                        });
-                      });
-                    }
-                  });
-                }
-              } else {
-                // This is an intermediate folder
-                if (!moduleFiles.find(f => f.name === part && f.level === currentLevel + 1)) {
+          // Add children files
+          if (structure.children) {
+            structure.children.forEach((child) => {
+              moduleFiles.push({
+                name: child.name,
+                type: child.type,
+                level: pathDepth + 1,
+                parent: structure.name,
+                isNew: true
+              });
+
+              // Add nested children if they exist
+              if (child.children) {
+                child.children.forEach((grandchild) => {
                   moduleFiles.push({
-                    name: part,
-                    type: 'folder',
-                    level: currentLevel + 1,
+                    name: grandchild.name,
+                    type: grandchild.type,
+                    level: pathDepth + 2,
+                    parent: child.name,
                     isNew: true
                   });
-                }
+                });
               }
-              currentLevel++;
-            }
-          });
+            });
+          }
         });
       }
     });
@@ -173,7 +173,10 @@ export const FileTreePreview: React.FC<FileTreePreviewProps> = ({
           </div>
         </div>
 
-        <div className="max-h-96 overflow-y-auto">
+        <div
+          ref={scrollRef}
+          className="max-h-[600px] overflow-y-auto"
+        >
           <AnimatePresence mode="wait">
             {files.length > 0 ? (
               <motion.div
@@ -186,9 +189,14 @@ export const FileTreePreview: React.FC<FileTreePreviewProps> = ({
                 {files.map((file, index) => (
                   <motion.div
                     key={`${file.name}-${index}`}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.2, delay: index * 0.02 }}
+                    initial={{ opacity: 0, x: file.isNew ? 20 : -10, scale: file.isNew ? 0.95 : 1 }}
+                    animate={{ opacity: 1, x: 0, scale: 1 }}
+                    transition={{
+                      duration: file.isNew ? 0.4 : 0.2,
+                      delay: index * 0.02,
+                      type: file.isNew ? "spring" : "ease",
+                      stiffness: file.isNew ? 200 : 100
+                    }}
                     className={cn(
                       "flex items-center py-1 px-2 rounded-md transition-colors font-mono text-sm",
                       "hover:bg-zinc-800/50",

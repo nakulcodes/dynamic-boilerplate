@@ -27,5 +27,18 @@
       "register": ["ConfigModule"]
     }
   },
+  "fileStructure": [
+    {
+      "name": "config",
+      "type": "folder",
+      "path": "src/modules/config",
+      "children": [
+        { "name": "config.module.ts", "type": "file" },
+        { "name": "config.service.ts", "type": "file" },
+        { "name": "config.schema.ts", "type": "file" },
+        { "name": "config.factory.ts", "type": "file" }
+      ]
+    }
+  ],
   "postInstall": []
 }

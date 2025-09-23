@@ -42,16 +42,15 @@
       "type": "folder",
       "path": "src/database",
       "children": [
+        { "name": "entities", "type": "folder", "children": [
+          { "name": ".gitkeep", "type": "file" }
+        ]},
         { "name": "migrations", "type": "folder", "children": [
           { "name": ".gitkeep", "type": "file" }
-        ]}
-      ]
-    },
-    {
-      "name": "database",
-      "type": "folder",
-      "path": "src/modules/database",
-      "children": [
+        ]},
+        { "name": "repositories", "type": "folder", "children": [
+          { "name": ".gitkeep", "type": "file" }
+        ]},
         { "name": "database.module.ts", "type": "file" },
         { "name": "database.service.ts", "type": "file" }
       ]
