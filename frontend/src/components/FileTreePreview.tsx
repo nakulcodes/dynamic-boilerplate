@@ -13,10 +13,12 @@ import {
   Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { ModuleInfo } from '../types';
 
 interface FileTreePreviewProps {
   selectedPreset: string;
   selectedModules: string[];
+  modules?: ModuleInfo[];
 }
 
 interface FileItem {
@@ -30,6 +32,7 @@ interface FileItem {
 export const FileTreePreview: React.FC<FileTreePreviewProps> = ({
   selectedPreset,
   selectedModules,
+  modules = [],
 }) => {
   const getFileTree = (): FileItem[] => {
     if (!selectedPreset) return [];
@@ -45,45 +48,75 @@ export const FileTreePreview: React.FC<FileTreePreviewProps> = ({
       { name: 'app.module.ts', type: 'file', level: 1 },
       { name: 'app.controller.ts', type: 'file', level: 1 },
       { name: 'app.service.ts', type: 'file', level: 1 },
-      { name: 'auth', type: 'folder', level: 1 },
-      { name: 'auth.module.ts', type: 'file', level: 2 },
-      { name: 'auth.service.ts', type: 'file', level: 2 },
-      { name: 'auth.controller.ts', type: 'file', level: 2 },
-      { name: 'users', type: 'folder', level: 1 },
-      { name: 'users.module.ts', type: 'file', level: 2 },
-      { name: 'users.service.ts', type: 'file', level: 2 },
-      { name: 'user.entity.ts', type: 'file', level: 2 },
       { name: 'common', type: 'folder', level: 1 },
-      { name: 'logging', type: 'folder', level: 2 },
+      { name: 'modules', type: 'folder', level: 1 },
     ];
 
-    // Add module-specific files
+    // Add module-specific files dynamically
     const moduleFiles: FileItem[] = [];
 
-    if (selectedModules.includes('google-oauth')) {
-      moduleFiles.push(
-        { name: 'google-oauth', type: 'folder', level: 2, parent: 'auth', isNew: true },
-        { name: 'google-oauth.module.ts', type: 'file', level: 3, parent: 'google-oauth', isNew: true },
-        { name: 'google.strategy.ts', type: 'file', level: 3, parent: 'google-oauth', isNew: true }
-      );
-    }
+    selectedModules.forEach(moduleName => {
+      const module = modules.find(m => m.name === moduleName);
+      if (module && module.fileStructure) {
+        module.fileStructure.forEach((structure) => {
+          const pathParts = structure.path.split('/');
+          let currentLevel = 0;
 
-    if (selectedModules.includes('google-calendar')) {
-      moduleFiles.push(
-        { name: 'integrations', type: 'folder', level: 1, isNew: true },
-        { name: 'google-calendar', type: 'folder', level: 2, parent: 'integrations', isNew: true },
-        { name: 'google-calendar.module.ts', type: 'file', level: 3, parent: 'google-calendar', isNew: true },
-        { name: 'google-calendar.service.ts', type: 'file', level: 3, parent: 'google-calendar', isNew: true }
-      );
-    }
+          // Add folder structure based on path
+          pathParts.forEach((part: string, index: number) => {
+            if (part && part !== 'src') { // Skip src as it's already in base
+              const isLast = index === pathParts.length - 1;
+              if (isLast) {
+                // This is the main folder for the module
+                moduleFiles.push({
+                  name: structure.name,
+                  type: structure.type,
+                  level: currentLevel + 1,
+                  isNew: true
+                });
 
-    if (selectedModules.includes('enhanced-logging')) {
-      moduleFiles.push(
-        { name: 'enhanced-logging', type: 'folder', level: 2, parent: 'common', isNew: true },
-        { name: 'elasticsearch.service.ts', type: 'file', level: 3, parent: 'enhanced-logging', isNew: true },
-        { name: 'metrics.service.ts', type: 'file', level: 3, parent: 'enhanced-logging', isNew: true }
-      );
-    }
+                // Add children files
+                if (structure.children) {
+                  structure.children.forEach((child) => {
+                    moduleFiles.push({
+                      name: child.name,
+                      type: child.type,
+                      level: currentLevel + 2,
+                      parent: structure.name,
+                      isNew: true
+                    });
+
+                    // Add nested children if they exist
+                    if (child.children) {
+                      child.children.forEach((grandchild) => {
+                        moduleFiles.push({
+                          name: grandchild.name,
+                          type: grandchild.type,
+                          level: currentLevel + 3,
+                          parent: child.name,
+                          isNew: true
+                        });
+                      });
+                    }
+                  });
+                }
+              } else {
+                // This is an intermediate folder
+                if (!moduleFiles.find(f => f.name === part && f.level === currentLevel + 1)) {
+                  moduleFiles.push({
+                    name: part,
+                    type: 'folder',
+                    level: currentLevel + 1,
+                    isNew: true
+                  });
+                }
+              }
+              currentLevel++;
+            }
+          });
+        });
+      }
+    });
 
     return [...baseFiles, ...moduleFiles];
   };

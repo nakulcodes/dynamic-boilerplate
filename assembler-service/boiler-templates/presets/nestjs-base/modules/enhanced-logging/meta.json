@@ -1,6 +1,8 @@
 {
   "name": "enhanced-logging",
   "description": "Enhanced logging with Elasticsearch integration and metrics",
+  "category": "monitoring",
+  "required": false,
   "deps": {
     "@elastic/elasticsearch": "^8.10.0",
     "prom-client": "^15.0.0",
@@ -8,10 +10,14 @@
   },
   "devDeps": {},
   "env": [
-    "ELASTICSEARCH_URL",
-    "METRICS_ENABLED",
-    "METRICS_PORT"
+    { "key": "ELASTICSEARCH_URL", "required": true, "example": "http://localhost:9200" },
+    { "key": "METRICS_ENABLED", "required": false, "example": "true" },
+    { "key": "METRICS_PORT", "required": false, "example": "9090" }
   ],
+  "routes": ["/metrics"],
+  "dependsOn": ["config"],
+  "optionalDeps": [],
+  "qualityChecklist": ["unit-tests", "integration-tests", "README"],
   "filesPath": "files",
   "conflicts": [],
   "inject": {
@@ -20,5 +26,18 @@
       "register": ["EnhancedLoggingModule"]
     }
   },
+  "fileStructure": [
+    {
+      "name": "enhanced-logging",
+      "type": "folder",
+      "path": "src/common/enhanced-logging",
+      "children": [
+        { "name": "enhanced-logging.module.ts", "type": "file" },
+        { "name": "elasticsearch.service.ts", "type": "file" },
+        { "name": "metrics.service.ts", "type": "file" },
+        { "name": "metrics.controller.ts", "type": "file" }
+      ]
+    }
+  ],
   "postInstall": []
 }

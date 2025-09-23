@@ -36,6 +36,27 @@
       "register": ["DatabaseModule"]
     }
   },
+  "fileStructure": [
+    {
+      "name": "database",
+      "type": "folder",
+      "path": "src/database",
+      "children": [
+        { "name": "migrations", "type": "folder", "children": [
+          { "name": ".gitkeep", "type": "file" }
+        ]}
+      ]
+    },
+    {
+      "name": "database",
+      "type": "folder",
+      "path": "src/modules/database",
+      "children": [
+        { "name": "database.module.ts", "type": "file" },
+        { "name": "database.service.ts", "type": "file" }
+      ]
+    }
+  ],
   "postInstall": [
     "echo 'Database module installed. Run migrations with: npm run migration:run'"
   ]

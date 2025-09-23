@@ -29,5 +29,18 @@
       "register": ["GoogleOAuthModule"]
     }
   },
+  "fileStructure": [
+    {
+      "name": "google-oauth",
+      "type": "folder",
+      "path": "src/modules/auth/google-oauth",
+      "children": [
+        { "name": "google-oauth.module.ts", "type": "file" },
+        { "name": "google-oauth.service.ts", "type": "file" },
+        { "name": "google-oauth.controller.ts", "type": "file" },
+        { "name": "google.strategy.ts", "type": "file" }
+      ]
+    }
+  ],
   "postInstall": []
 }

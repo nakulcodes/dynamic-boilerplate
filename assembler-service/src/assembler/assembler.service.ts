@@ -525,7 +525,9 @@ export class AssemblerService {
               modules.push({
                 name: meta.name,
                 description: meta.description,
+                category: meta.category || 'other',
                 conflicts: meta.conflicts || [],
+                fileStructure: meta.fileStructure || [],
               });
             }
           }

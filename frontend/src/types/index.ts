@@ -1,7 +1,16 @@
+export interface FileStructureItem {
+  name: string;
+  type: 'file' | 'folder';
+  path: string;
+  children?: FileStructureItem[];
+}
+
 export interface ModuleInfo {
   name: string;
   description: string;
+  category: string;
   conflicts: string[];
+  fileStructure: FileStructureItem[];
 }
 
 export interface PresetInfo {

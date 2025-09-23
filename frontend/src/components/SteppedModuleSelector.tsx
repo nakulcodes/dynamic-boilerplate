@@ -67,7 +67,7 @@ export const SteppedModuleSelector: React.FC<SteppedModuleSelectorProps> = ({
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
 
-  // Categorize modules based on their name and description
+  // Categorize modules based on their category field from meta.json
   const categories = useMemo((): ModuleCategory[] => {
     const categorizedModules = {
       database: [] as ModuleInfo[],
@@ -78,31 +78,48 @@ export const SteppedModuleSelector: React.FC<SteppedModuleSelectorProps> = ({
       storage: [] as ModuleInfo[],
       monitoring: [] as ModuleInfo[],
       documentation: [] as ModuleInfo[],
+      core: [] as ModuleInfo[],
+      cache: [] as ModuleInfo[],
+      communication: [] as ModuleInfo[],
       other: [] as ModuleInfo[],
     };
 
     modules.forEach(module => {
-      const name = module.name.toLowerCase();
-      const description = module.description.toLowerCase();
+      const category = module.category || 'other';
 
-      if (name.includes('database') || name.includes('db') || name.includes('postgres') || name.includes('mysql') || name.includes('mongo')) {
-        categorizedModules.database.push(module);
-      } else if (name.includes('auth') || name.includes('oauth') || name.includes('jwt') || name.includes('login')) {
-        categorizedModules.authentication.push(module);
-      } else if (name.includes('security') || name.includes('encrypt') || name.includes('hash') || description.includes('security')) {
-        categorizedModules.security.push(module);
-      } else if (name.includes('cache') || name.includes('redis') || name.includes('memory') || description.includes('performance')) {
-        categorizedModules.performance.push(module);
-      } else if (name.includes('config') || name.includes('env') || name.includes('validation')) {
-        categorizedModules.configuration.push(module);
-      } else if (name.includes('storage') || name.includes('s3') || name.includes('file') || name.includes('upload')) {
-        categorizedModules.storage.push(module);
-      } else if (name.includes('log') || name.includes('monitoring') || name.includes('metrics') || name.includes('audit')) {
-        categorizedModules.monitoring.push(module);
-      } else if (name.includes('doc') || name.includes('swagger') || name.includes('api-doc')) {
-        categorizedModules.documentation.push(module);
-      } else {
-        categorizedModules.other.push(module);
+      // Map API categories to our display categories
+      switch (category) {
+        case 'core':
+          categorizedModules.database.push(module); // Core modules like database go to database category
+          break;
+        case 'authentication':
+          categorizedModules.authentication.push(module);
+          break;
+        case 'security':
+          categorizedModules.security.push(module);
+          break;
+        case 'cache':
+        case 'performance':
+          categorizedModules.performance.push(module);
+          break;
+        case 'configuration':
+        case 'config':
+          categorizedModules.configuration.push(module);
+          break;
+        case 'storage':
+          categorizedModules.storage.push(module);
+          break;
+        case 'monitoring':
+          categorizedModules.monitoring.push(module);
+          break;
+        case 'documentation':
+          categorizedModules.documentation.push(module);
+          break;
+        case 'communication':
+          categorizedModules.communication.push(module);
+          break;
+        default:
+          categorizedModules.other.push(module);
       }
     });
 
@@ -170,6 +187,14 @@ export const SteppedModuleSelector: React.FC<SteppedModuleSelectorProps> = ({
         icon: categoryIcons.documentation,
         color: categoryColors.documentation,
         modules: categorizedModules.documentation,
+      },
+      {
+        id: 'communication',
+        name: 'Communication & Notifications',
+        description: 'Email, SMS, messaging, and notification services',
+        icon: categoryIcons.other,
+        color: categoryColors.other,
+        modules: categorizedModules.communication,
       },
       {
         id: 'other',

@@ -237,22 +237,6 @@ export function MainContent() {
                   />
                 </motion.div>
 
-                {/* Project Configuration */}
-                <motion.div
-                  key="project-config"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3, delay: 0.1 }}
-                >
-                  <ProjectConfig
-                    projectName={projectName}
-                    author={author}
-                    onProjectNameChange={setProjectName}
-                    onAuthorChange={setAuthor}
-                  />
-                </motion.div>
-
                 {/* Module Selection */}
                 {currentPreset && (
                   <motion.div
@@ -260,12 +244,30 @@ export function MainContent() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.3, delay: 0.2 }}
+                    transition={{ duration: 0.3, delay: 0.1 }}
                   >
                     <SteppedModuleSelector
                       modules={currentPreset.modules}
                       selectedModules={selectedModules}
                       onModuleChange={setSelectedModules}
+                    />
+                  </motion.div>
+                )}
+
+                {/* Project Configuration - Show after modules are selected */}
+                {selectedModules.length > 0 && (
+                  <motion.div
+                    key="project-config"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3, delay: 0.2 }}
+                  >
+                    <ProjectConfig
+                      projectName={projectName}
+                      author={author}
+                      onProjectNameChange={setProjectName}
+                      onAuthorChange={setAuthor}
                     />
                   </motion.div>
                 )}
@@ -283,6 +285,7 @@ export function MainContent() {
                 <FileTreePreview
                   selectedPreset={selectedPreset}
                   selectedModules={selectedModules}
+                  modules={currentPreset?.modules || []}
                 />
               </div>
             </motion.div>
