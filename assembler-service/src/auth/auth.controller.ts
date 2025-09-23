@@ -1,75 +1,51 @@
-import { Controller, Get, Query, Req, Res, UseGuards, Logger, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Req, Res, UseGuards, Logger } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Response, Request } from 'express';
 import { ConfigService } from '@nestjs/config';
-import { GitHubUser } from './github-oauth.strategy';
-import { GitHubOAuthGuard } from './github-oauth.guard';
+import { GoogleOAuthGuard } from './google-oauth.guard';
+import { AuthService } from './auth.service';
+import { User } from '@db/entities/user.entity';
 
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly authService: AuthService,
+  ) {}
 
-  @Get('github')
-  @UseGuards(GitHubOAuthGuard)
-  @ApiOperation({ summary: 'Initiate GitHub OAuth flow' })
-  @ApiQuery({
-    name: 'userId',
-    required: true,
-    description: 'User ID to associate with GitHub account'
-  })
-  @ApiQuery({
-    name: 'redirect',
-    required: false,
-    description: 'Frontend redirect URL after OAuth completion'
-  })
-  @ApiResponse({ status: 302, description: 'Redirects to GitHub OAuth' })
-  async githubAuth(
-    @Query('userId') userId: string,
-    @Req() req: Request,
-    @Query('redirect') redirectUrl?: string,
-  ) {
-    if (!userId) {
-      throw new BadRequestException('userId parameter is required');
-    }
-
-    // The AuthGuard will handle the redirect to GitHub with the state parameter
-    // This is handled automatically by Passport with our custom guard
-    this.logger.log(`Initiating GitHub OAuth for user: ${userId}`);
+  @Get('google')
+  @UseGuards(GoogleOAuthGuard)
+  @ApiOperation({ summary: 'Initiate Google OAuth flow' })
+  @ApiResponse({ status: 302, description: 'Redirects to Google OAuth' })
+  async googleAuth() {
+    // The AuthGuard will handle the redirect to Google
+    this.logger.log('Initiating Google OAuth');
   }
 
-  @Get('github/callback')
-  @UseGuards(AuthGuard('github'))
-  @ApiOperation({ summary: 'Handle GitHub OAuth callback' })
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  @ApiOperation({ summary: 'Handle Google OAuth callback' })
   @ApiResponse({ status: 302, description: 'Redirects to frontend with result' })
-  async githubCallback(
-    @Req() req: Request & { user: { user: GitHubUser; userId: string; state: string } },
+  async googleCallback(
+    @Req() req: Request & { user: User },
     @Res() res: Response,
   ) {
     try {
-      const { user, userId, state } = req.user;
+      const user = req.user;
 
-      this.logger.log(`GitHub OAuth callback for user: ${userId}, GitHub user: ${user.username}`);
+      this.logger.log(`Google OAuth callback for user: ${user.email}`);
 
-      // Parse state to get redirect URL
-      let redirectUrl = this.configService.get<string>('FRONTEND_URL');
-
-      if (state) {
-        try {
-          const stateData = JSON.parse(Buffer.from(state, 'base64').toString());
-          redirectUrl = stateData.redirectUrl || redirectUrl;
-        } catch (error) {
-          this.logger.warn('Failed to parse state in callback:', error);
-        }
-      }
+      // Generate JWT token
+      const authResult = await this.authService.login(user);
 
       // Construct success redirect URL
-      const successUrl = new URL('/github/oauth/success', redirectUrl);
-      successUrl.searchParams.set('userId', userId);
-      successUrl.searchParams.set('username', user.username);
+      const frontendUrl = this.configService.get<string>('FRONTEND_URL');
+      const successUrl = new URL('/auth/callback', frontendUrl);
+      successUrl.searchParams.set('token', authResult.token);
       successUrl.searchParams.set('status', 'success');
 
       this.logger.log(`Redirecting to: ${successUrl.toString()}`);
@@ -77,11 +53,11 @@ export class AuthController {
       return res.redirect(successUrl.toString());
 
     } catch (error) {
-      this.logger.error('GitHub OAuth callback failed:', error);
+      this.logger.error('Google OAuth callback failed:', error);
 
       // Construct error redirect URL
       const frontendUrl = this.configService.get<string>('FRONTEND_URL');
-      const errorUrl = new URL('/github/oauth/error', frontendUrl);
+      const errorUrl = new URL('/auth/callback', frontendUrl);
       errorUrl.searchParams.set('error', error.message || 'OAuth failed');
       errorUrl.searchParams.set('status', 'error');
 
