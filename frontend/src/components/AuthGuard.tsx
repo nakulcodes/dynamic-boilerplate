@@ -82,13 +82,7 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               transition={{ duration: 0.3, type: "spring", damping: 25, stiffness: 300 }}
             >
-              {/* Close button */}
-              <button
-                onClick={() => setShowModal(false)}
-                className="absolute top-4 right-4 text-zinc-400 hover:text-zinc-200 transition-colors"
-              >
-                <X className="h-5 w-5" />
-              </button>
+      
 
               {/* Modal Header */}
               <div className="text-center mb-6">

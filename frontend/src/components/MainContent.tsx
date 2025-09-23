@@ -7,8 +7,9 @@ import { FileTreePreview } from "./FileTreePreview";
 import { GenerateButton } from "./GenerateButton";
 import { ApiService } from "../services/api.service";
 import type { PresetInfo, GenerateRequest } from "../types";
-import { Loader2, LogOut } from "lucide-react";
+import { Loader2, LogOut, History, Zap } from "lucide-react";
 import { useAuth } from '../contexts/AuthContext';
+import { ProjectHistory } from './ProjectHistory';
 
 export function MainContent() {
   const { user, logout } = useAuth();
@@ -19,6 +20,7 @@ export function MainContent() {
   const [author, setAuthor] = useState<string>(user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.email || "");
   const [loading, setLoading] = useState<boolean>(true);
   const [envRequired, setEnvRequired] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState<'generator' | 'history'>('generator');
 
   useEffect(() => {
     loadPresets();
@@ -128,7 +130,7 @@ export function MainContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <motion.div
           className="text-center"
           initial={{ opacity: 0, y: 20 }}
@@ -136,18 +138,18 @@ export function MainContent() {
           transition={{ duration: 0.5 }}
         >
           <div className="flex items-center justify-center mb-4">
-            <Loader2 className="h-8 w-8 animate-spin text-white" />
+            <Loader2 className="h-8 w-8 animate-spin text-foreground" />
           </div>
-          <p className="text-zinc-400">Loading presets...</p>
+          <p className="text-muted-foreground">Loading presets...</p>
         </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 relative overflow-hidden">
+    <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Background gradient */}
-      <div className="fixed inset-0 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-800/20 pointer-events-none" />
+      <div className="fixed inset-0 bg-gradient-to-br from-background via-background to-muted/20 pointer-events-none" />
 
       {/* Grid pattern overlay */}
       <div
@@ -159,9 +161,9 @@ export function MainContent() {
 
       <div className="relative z-10">
         {/* User info and logout */}
-        {user && (
-          <div className="absolute top-4 right-4 z-20">
-            <div className="flex items-center gap-3 bg-zinc-900/50 backdrop-blur-sm border border-zinc-800 rounded-lg px-4 py-2">
+        <div className="absolute top-4 right-4 z-20 flex items-center gap-3">
+          {user && (
+            <div className="flex items-center gap-3 bg-card/50 backdrop-blur-sm border border-border rounded-lg px-4 py-2">
               {user.picture && (
                 <img
                   src={user.picture}
@@ -170,19 +172,19 @@ export function MainContent() {
                 />
               )}
               <div className="text-sm">
-                <div className="text-zinc-200">{user.firstName} {user.lastName}</div>
-                <div className="text-zinc-400 text-xs">{user.email}</div>
+                <div className="text-foreground">{user.firstName} {user.lastName}</div>
+                <div className="text-muted-foreground text-xs">{user.email}</div>
               </div>
               <button
                 onClick={logout}
-                className="ml-2 p-1 text-zinc-400 hover:text-zinc-200 transition-colors"
+                className="ml-2 p-1 text-muted-foreground hover:text-foreground transition-colors"
                 title="Logout"
               >
                 <LogOut className="h-4 w-4" />
               </button>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         <div className="container mx-auto px-6 py-12 max-w-7xl">
           {/* Header */}
@@ -192,28 +194,71 @@ export function MainContent() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <div className="inline-flex items-center px-4 py-2 mb-6 rounded-full glass border border-zinc-800/50">
-              <span className="text-sm font-medium text-zinc-400">
+            <div className="inline-flex items-center px-4 py-2 mb-6 rounded-full glass border border-border/50">
+              <span className="text-sm font-medium text-muted-foreground">
                 ✨ Modern Project Generator
               </span>
             </div>
 
-            <h1 className="text-5xl md:text-6xl font-bold text-zinc-50 mb-6 tracking-tight">
+            <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-6 tracking-tight">
               Dynamic Boilerplate{" "}
-              <span className="bg-gradient-to-r from-white to-zinc-300 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
                 Generator
               </span>
             </h1>
 
-            <p className="text-xl text-zinc-400 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
               Generate production-ready repositories from base presets and
               feature modules.
               <br />
               Select your stack, choose your modules, and ship faster.
             </p>
+
+            {/* Tab Navigation */}
+            <motion.div
+              className="flex justify-center mt-8"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <div className="flex items-center bg-secondary rounded-lg p-1">
+                <button
+                  onClick={() => setActiveTab('generator')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === 'generator'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Zap className="h-4 w-4" />
+                  Generator
+                </button>
+                <button
+                  onClick={() => setActiveTab('history')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === 'history'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <History className="h-4 w-4" />
+                  Project History
+                </button>
+              </div>
+            </motion.div>
           </motion.div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+          {/* Tab Content */}
+          <AnimatePresence mode="wait">
+            {activeTab === 'generator' ? (
+              <motion.div
+                key="generator"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
             {/* Configuration Panel */}
             <motion.div
               className="xl:col-span-8 space-y-8"
@@ -221,13 +266,10 @@ export function MainContent() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
             >
-              <AnimatePresence mode="wait">
                 {/* Preset Selection */}
                 <motion.div
-                  key="preset-selector"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.3 }}
                 >
                   <PresetSelector
@@ -240,10 +282,8 @@ export function MainContent() {
                 {/* Module Selection */}
                 {currentPreset && (
                   <motion.div
-                    key="module-selector"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.3, delay: 0.1 }}
                   >
                     <SteppedModuleSelector
@@ -257,10 +297,8 @@ export function MainContent() {
                 {/* Project Configuration - Show after modules are selected */}
                 {selectedModules.length > 0 && (
                   <motion.div
-                    key="project-config"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.3, delay: 0.2 }}
                   >
                     <ProjectConfig
@@ -271,7 +309,6 @@ export function MainContent() {
                     />
                   </motion.div>
                 )}
-              </AnimatePresence>
             </motion.div>
 
             {/* Preview Panel */}
@@ -304,6 +341,19 @@ export function MainContent() {
               envRequired={envRequired}
             />
           </motion.div>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="history"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <ProjectHistory />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>

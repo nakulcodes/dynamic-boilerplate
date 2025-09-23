@@ -133,6 +133,13 @@ export class GenerateProjectDto {
   @IsString()
   author?: string;
 
+  @ApiPropertyOptional({
+    description: 'User ID who is generating the project',
+    example: 123,
+  })
+  @IsOptional()
+  userId?: number;
+
   @ApiProperty({
     description: 'Output configuration',
     type: OutputDto,

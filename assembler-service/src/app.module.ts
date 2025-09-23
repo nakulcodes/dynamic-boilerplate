@@ -5,6 +5,7 @@ import { StorageModule } from './storage/storage.module';
 import { DatabaseModule } from './database/database.module';
 import { GitHubModule } from './github/github.module';
 import { AuthModule } from './auth/auth.module';
+import { ProjectHistoryModule } from './project-history/project-history.module';
 import { HealthController } from './health/health.controller';
 
 @Module({
@@ -18,6 +19,7 @@ import { HealthController } from './health/health.controller';
     StorageModule,
     GitHubModule,
     AuthModule,
+    ProjectHistoryModule,
   ],
   controllers: [HealthController],
   providers: [],

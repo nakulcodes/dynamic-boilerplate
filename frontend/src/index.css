@@ -23,7 +23,10 @@
   --color-blue-400: #60a5fa;
   --color-orange-400: #fb923c;
   --color-white: #ffffff;
+  --color-black: #000000;
+}
 
+:root {
   --color-primary: var(--color-white);
   --color-background: var(--color-zinc-950);
   --color-foreground: var(--color-zinc-50);
@@ -59,15 +62,15 @@ body {
 
 /* Custom glassmorphism effect */
 .glass {
-  background-color: rgba(9, 9, 11, 0.8);
   backdrop-filter: blur(24px);
+  background-color: rgba(9, 9, 11, 0.8);
   border: 1px solid rgba(39, 39, 42, 0.5);
 }
 
 .glass-card {
-  background-color: rgba(9, 9, 11, 0.8);
   backdrop-filter: blur(24px);
-  border: 1px solid rgba(39, 39, 42, 0.5);
   border-radius: 16px;
+  background-color: rgba(9, 9, 11, 0.8);
+  border: 1px solid rgba(39, 39, 42, 0.5);
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.2);
 }

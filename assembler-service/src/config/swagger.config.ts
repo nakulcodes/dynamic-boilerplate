@@ -19,7 +19,7 @@ export function setupSwagger(app: INestApplication): void {
       },
       'JWT-auth',
     )
-    .addServer('http://localhost:3000', 'Development server')
+    .addServer('http://localhost:5002', 'Development server')
     .addServer('https://api.example.com', 'Production server')
     .build();
 

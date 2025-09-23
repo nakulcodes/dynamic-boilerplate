@@ -83,4 +83,53 @@ export class ApiService {
       throw error;
     }
   }
+
+  static async getProjectHistory(params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+  } = {}): Promise<any> {
+    try {
+      const searchParams = new URLSearchParams();
+      if (params.page) searchParams.append('page', params.page.toString());
+      if (params.limit) searchParams.append('limit', params.limit.toString());
+      if (params.search) searchParams.append('search', params.search);
+
+      const response = await api.get(`/project-history?${searchParams.toString()}`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch project history:', error);
+      throw error;
+    }
+  }
+
+  static async getProjectStats(): Promise<any> {
+    try {
+      const response = await api.get('/project-history/stats');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch project stats:', error);
+      throw error;
+    }
+  }
+
+  static async deleteProject(projectId: number): Promise<any> {
+    try {
+      const response = await api.delete(`/project-history/${projectId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to delete project:', error);
+      throw error;
+    }
+  }
+
+  static async getProjectById(projectId: number): Promise<any> {
+    try {
+      const response = await api.get(`/project-history/${projectId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch project details:', error);
+      throw error;
+    }
+  }
 }

@@ -9,6 +9,7 @@ import { StorageService } from '../storage/storage.service';
 import { GitHubService } from '../github/github.service';
 import { GenerateProjectDto } from '../common/dto/generate-project.dto';
 import { ModuleMeta, GenerationResult } from '../common/interfaces/module-meta.interface';
+import { GeneratedProjectRepository } from '../database/repositories/generated-project.repository';
 
 @Injectable()
 export class AssemblerService {
@@ -19,13 +20,29 @@ export class AssemblerService {
     private configService: ConfigService,
     private storageService: StorageService,
     private githubService: GitHubService,
+    private generatedProjectRepository: GeneratedProjectRepository,
   ) {
     this.templatesPath = path.resolve(__dirname, '../../boiler-templates');
   }
 
   async generateProject(generateDto: GenerateProjectDto): Promise<GenerationResult> {
+    let projectRecord = null;
+
     try {
       this.logger.log(`Starting project generation: ${generateDto.projectName}`);
+
+      // Create project history record if userId is provided
+      if (generateDto.userId) {
+        projectRecord = await this.generatedProjectRepository.createProject({
+          projectName: generateDto.projectName,
+          preset: generateDto.preset,
+          modules: generateDto.modules,
+          author: generateDto.author || 'Unknown',
+          userId: generateDto.userId,
+          status: 'generating'
+        });
+        this.logger.log(`Created project history record with ID: ${projectRecord.id}`);
+      }
 
       // Validate preset exists
       const presetPath = path.join(this.templatesPath, 'presets', generateDto.preset);
@@ -58,8 +75,18 @@ export class AssemblerService {
           await this.storageService.createZip(workDir, zipFileName);
 
           // Create download URL
-          const baseUrl = this.configService.get<string>('BASE_URL', 'http://localhost:5001');
+          const baseUrl = this.configService.get<string>('BASE_URL', 'http://localhost:5002');
           const downloadUrl = `${baseUrl}/api/download/${zipFileName}`;
+
+          // Update project history record with success
+          if (projectRecord) {
+            await this.generatedProjectRepository.updateProject(projectRecord.id, {
+              status: 'completed',
+              downloadUrl: downloadUrl,
+              fileName: zipFileName
+            });
+            this.logger.log(`Updated project history record ${projectRecord.id} with download info`);
+          }
 
           return {
             status: 'success',
@@ -96,6 +123,16 @@ export class AssemblerService {
             branch: githubOutput.branch || 'main',
           });
 
+          // Update project history record with success
+          if (projectRecord) {
+            await this.generatedProjectRepository.updateProject(projectRecord.id, {
+              status: 'completed',
+              downloadUrl: pushResult.repositoryUrl,
+              fileName: `${generateDto.projectName} (GitHub)`
+            });
+            this.logger.log(`Updated project history record ${projectRecord.id} with GitHub info`);
+          }
+
           return {
             status: 'success',
             outputUrl: pushResult.repositoryUrl,
@@ -114,6 +151,16 @@ export class AssemblerService {
 
     } catch (error) {
       this.logger.error('Project generation failed:', error);
+
+      // Update project history record with failure
+      if (projectRecord) {
+        await this.generatedProjectRepository.updateProject(projectRecord.id, {
+          status: 'failed'
+        }).catch(updateError => {
+          this.logger.error(`Failed to update project history record ${projectRecord.id}:`, updateError);
+        });
+      }
+
       return {
         status: 'error',
         error: error.message,
