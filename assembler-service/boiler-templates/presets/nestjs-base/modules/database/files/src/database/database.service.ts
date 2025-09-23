@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { TypedConfigService } from '@modules/config/config.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class DatabaseService implements OnModuleInit {
@@ -8,7 +8,7 @@ export class DatabaseService implements OnModuleInit {
 
   constructor(
     private readonly dataSource: DataSource,
-    private readonly configService: TypedConfigService,
+    private readonly configService: ConfigService,
   ) {}
 
   async onModuleInit() {
@@ -49,14 +49,9 @@ export class DatabaseService implements OnModuleInit {
    */
   async runMigrations(): Promise<void> {
     try {
-      const dbConfig = this.configService.database;
+      const migrationStrategy = this.configService.get<string>('MIGRATION_STRATEGY', 'manual');
 
-      if (!dbConfig) {
-        this.logger.warn('No database configuration found, skipping migrations');
-        return;
-      }
-
-      if (dbConfig.MIGRATION_STRATEGY === 'auto') {
+      if (migrationStrategy === 'auto') {
         this.logger.log('Running pending migrations...');
         await this.dataSource.runMigrations({ transaction: 'all' });
         this.logger.log('Migrations completed successfully');
@@ -116,9 +111,9 @@ export class DatabaseService implements OnModuleInit {
    * Create database if it doesn't exist (PostgreSQL)
    */
   async createDatabase(): Promise<void> {
-    const dbConfig = this.configService.database;
+    const dbType = this.configService.get<string>('DB_TYPE', 'postgres');
 
-    if (!dbConfig || dbConfig.DB_TYPE !== 'postgres') {
+    if (dbType !== 'postgres') {
       this.logger.warn('Database creation only supported for PostgreSQL');
       return;
     }
@@ -127,24 +122,26 @@ export class DatabaseService implements OnModuleInit {
       // Create a connection to the default postgres database
       const tempDataSource = new DataSource({
         type: 'postgres',
-        host: dbConfig.DB_HOST,
-        port: dbConfig.DB_PORT,
-        username: dbConfig.DB_USERNAME,
-        password: dbConfig.DB_PASSWORD,
+        host: this.configService.get<string>('DB_HOST', 'localhost'),
+        port: this.configService.get<number>('DB_PORT', 5432),
+        username: this.configService.get<string>('DB_USERNAME'),
+        password: this.configService.get<string>('DB_PASSWORD'),
         database: 'postgres', // Connect to default database
       });
 
       await tempDataSource.initialize();
 
+      const dbName = this.configService.get<string>('DB_DATABASE');
+
       // Check if database exists
       const result = await tempDataSource.query(
         'SELECT 1 FROM pg_database WHERE datname = $1',
-        [dbConfig.DB_DATABASE]
+        [dbName]
       );
 
       if (result.length === 0) {
-        this.logger.log(`Creating database: ${dbConfig.DB_DATABASE}`);
-        await tempDataSource.query(`CREATE DATABASE "${dbConfig.DB_DATABASE}"`);
+        this.logger.log(`Creating database: ${dbName}`);
+        await tempDataSource.query(`CREATE DATABASE "${dbName}"`);
         this.logger.log('Database created successfully');
       } else {
         this.logger.log('Database already exists');
@@ -161,13 +158,9 @@ export class DatabaseService implements OnModuleInit {
    * Drop database (use with caution!)
    */
   async dropDatabase(): Promise<void> {
-    const dbConfig = this.configService.database;
+    const nodeEnv = this.configService.get<string>('NODE_ENV', 'development');
 
-    if (!dbConfig) {
-      throw new Error('No database configuration found');
-    }
-
-    if (this.configService.isProduction) {
+    if (nodeEnv === 'production') {
       throw new Error('Database dropping is not allowed in production');
     }
 
@@ -184,7 +177,9 @@ export class DatabaseService implements OnModuleInit {
    * Synchronize database schema (use only in development)
    */
   async synchronizeSchema(): Promise<void> {
-    if (this.configService.isProduction) {
+    const nodeEnv = this.configService.get<string>('NODE_ENV', 'development');
+
+    if (nodeEnv === 'production') {
       throw new Error('Schema synchronization is not allowed in production');
     }
 
@@ -209,14 +204,13 @@ export class DatabaseService implements OnModuleInit {
     migrationsPending: number;
   }> {
     try {
-      const dbConfig = this.configService.database;
       const connected = await this.isConnected();
       const migrationStatus = await this.getMigrationStatus();
 
       return {
         connected,
-        database: dbConfig?.DB_DATABASE || 'unknown',
-        type: dbConfig?.DB_TYPE || 'unknown',
+        database: this.configService.get<string>('DB_DATABASE', 'unknown'),
+        type: this.configService.get<string>('DB_TYPE', 'unknown'),
         migrationsExecuted: migrationStatus.executed.length,
         migrationsPending: migrationStatus.pending.length,
       };

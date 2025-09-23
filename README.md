@@ -285,3 +285,10 @@ Built with ❤️ using NestJS and React
 1. Implement a google login for project. 
 2. As soon as page is opened if google login is not done show popup for google login. Add simple user entities for it. 
 3. One call back is verifeid redirect back to frontend with logged in google
+
+
+
+1. Remove all database realated modules from `base` folder in `nestjs-base` project. 
+2. Strcuture database module present in `nestjs-base/modules`. After generation database should be present in modules above database having entities, repositories, seed and all. 
+3. Use config service to get variables
+4. If database url is present then use that else other variables make template accoridgly

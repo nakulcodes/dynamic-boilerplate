@@ -4,37 +4,103 @@
   "category": "core",
   "required": false,
   "deps": {
-    "typeorm": "^0.3.0",
+    "typeorm": "^0.3.17",
     "@nestjs/typeorm": "^10.0.0",
-    "pg": "^8.0.0"
+    "pg": "^8.11.0",
+    "mysql2": "^3.6.0",
+    "sqlite3": "^5.1.6"
   },
   "devDeps": {
-    "@types/pg": "^8.0.0"
+    "@types/pg": "^8.10.0"
   },
   "env": [
-    { "key": "DATABASE_URL", "required": false, "example": "postgres://user:pass@localhost:5432/db" },
-    { "key": "DB_TYPE", "required": false, "example": "postgres" },
-    { "key": "DB_HOST", "required": false, "example": "localhost" },
-    { "key": "DB_PORT", "required": false, "example": "5432" },
-    { "key": "DB_USERNAME", "required": false, "example": "postgres" },
-    { "key": "DB_PASSWORD", "required": false, "example": "password" },
-    { "key": "DB_DATABASE", "required": false, "example": "app_db" },
-    { "key": "DB_SYNCHRONIZE", "required": false, "example": "false" },
-    { "key": "DB_LOGGING", "required": false, "example": "false" },
-    { "key": "DB_SSL", "required": false, "example": "false" },
-    { "key": "MIGRATION_STRATEGY", "required": false, "example": "manual" }
+    {
+      "key": "DATABASE_URL",
+      "required": false,
+      "example": "postgres://user:pass@localhost:5432/db"
+    },
+    {
+      "key": "DB_TYPE",
+      "required": false,
+      "example": "postgres"
+    },
+    {
+      "key": "DB_HOST",
+      "required": false,
+      "example": "localhost"
+    },
+    {
+      "key": "DB_PORT",
+      "required": false,
+      "example": "5432"
+    },
+    {
+      "key": "DB_USERNAME",
+      "required": false,
+      "example": "postgres"
+    },
+    {
+      "key": "DB_PASSWORD",
+      "required": false,
+      "example": "password"
+    },
+    {
+      "key": "DB_DATABASE",
+      "required": false,
+      "example": "app_db"
+    },
+    {
+      "key": "DB_SYNCHRONIZE",
+      "required": false,
+      "example": "false"
+    },
+    {
+      "key": "DB_LOGGING",
+      "required": false,
+      "example": "false"
+    },
+    {
+      "key": "DB_SSL",
+      "required": false,
+      "example": "false"
+    },
+    {
+      "key": "MIGRATION_STRATEGY",
+      "required": false,
+      "example": "manual"
+    }
   ],
   "routes": [],
-  "dependsOn": ["config"],
+  "dependsOn": [
+    "config"
+  ],
   "optionalDeps": [],
-  "qualityChecklist": ["unit-tests", "migration-tests", "README"],
+  "qualityChecklist": [
+    "unit-tests",
+    "migration-tests",
+    "README"
+  ],
   "filesPath": "files",
   "conflicts": [],
   "inject": {
     "src/app.module.ts": {
-      "import": ["import { DatabaseModule } from '@modules/database/database.module';"],
-      "register": ["DatabaseModule"]
+      "import": [
+        "import { DatabaseModule } from '@db/database.module';"
+      ],
+      "register": [
+        "DatabaseModule"
+      ]
     }
+  },
+  "scripts": {
+    "migration:create": "typeorm migration:create -d ormconfig.ts",
+    "migration:generate": "typeorm migration:generate -d ormconfig.ts",
+    "migration:run": "typeorm migration:run -d ormconfig.ts",
+    "migration:revert": "typeorm migration:revert -d ormconfig.ts",
+    "migration:show": "typeorm migration:show -d ormconfig.ts",
+    "seed:run": "ts-node -r tsconfig-paths/register src/database/seeds/database.seeder.ts",
+    "schema:sync": "typeorm schema:sync -d ormconfig.ts",
+    "schema:drop": "typeorm schema:drop -d ormconfig.ts"
   },
   "fileStructure": [
     {
@@ -42,18 +108,102 @@
       "type": "folder",
       "path": "src/database",
       "children": [
-        { "name": "entities", "type": "folder", "children": [
-          { "name": ".gitkeep", "type": "file" }
-        ]},
-        { "name": "migrations", "type": "folder", "children": [
-          { "name": ".gitkeep", "type": "file" }
-        ]},
-        { "name": "repositories", "type": "folder", "children": [
-          { "name": ".gitkeep", "type": "file" }
-        ]},
-        { "name": "database.module.ts", "type": "file" },
-        { "name": "database.service.ts", "type": "file" }
+        {
+          "name": "entities",
+          "type": "folder",
+          "children": [
+            {
+              "name": "base.entity.ts",
+              "type": "file"
+            },
+            {
+              "name": "sample.entity.ts",
+              "type": "file"
+            },
+            {
+              "name": ".gitkeep",
+              "type": "file"
+            }
+          ]
+        },
+        {
+          "name": "repositories",
+          "type": "folder",
+          "children": [
+            {
+              "name": "base.repository.ts",
+              "type": "file"
+            },
+            {
+              "name": "sample.repository.ts",
+              "type": "file"
+            },
+            {
+              "name": ".gitkeep",
+              "type": "file"
+            }
+          ]
+        },
+        {
+          "name": "migrations",
+          "type": "folder",
+          "children": [
+            {
+              "name": ".gitkeep",
+              "type": "file"
+            }
+          ]
+        },
+        {
+          "name": "seeds",
+          "type": "folder",
+          "children": [
+            {
+              "name": "database.seeder.ts",
+              "type": "file"
+            },
+            {
+              "name": ".gitkeep",
+              "type": "file"
+            }
+          ]
+        },
+        {
+          "name": "interfaces",
+          "type": "folder",
+          "children": [
+            {
+              "name": "base-entity.interface.ts",
+              "type": "file"
+            },
+            {
+              "name": "repository.interface.ts",
+              "type": "file"
+            }
+          ]
+        },
+        {
+          "name": "database.module.ts",
+          "type": "file"
+        },
+        {
+          "name": "database.service.ts",
+          "type": "file"
+        },
+        {
+          "name": "database.config.ts",
+          "type": "file"
+        },
+        {
+          "name": "index.ts",
+          "type": "file"
+        }
       ]
+    },
+    {
+      "name": "ormconfig.ts",
+      "type": "file",
+      "path": "ormconfig.ts"
     }
   ],
   "postInstall": [
