@@ -1,0 +1,77 @@
+{
+  "name": "authentication",
+  "displayName": "Authentication System",
+  "description": "Complete authentication system with login, register, forgot password, protected routes, and JWT token management using React Hook Form and Zod validation",
+  "category": "security",
+  "required": false,
+  "deps": {
+    "axios": "^1.7.8",
+    "react-hook-form": "^7.54.0",
+    "@hookform/resolvers": "^3.9.0",
+    "zod": "^3.23.8",
+    "react-router-dom": "^6.20.1",
+    "@radix-ui/react-label": "^2.0.2",
+    "@radix-ui/react-slot": "^1.0.2",
+    "@radix-ui/react-checkbox": "^1.0.4",
+    "class-variance-authority": "^0.7.0",
+    "lucide-react": "^0.294.0",
+    "clsx": "^2.0.0",
+    "tailwindcss-merge": "^2.0.0"
+  },
+  "devDeps": {
+    "@types/node": "^20.9.2"
+  },
+  "env": [
+    {
+      "key": "VITE_API_URL",
+      "required": false,
+      "example": "http://localhost:3000/api",
+      "description": "Backend API URL for authentication endpoints"
+    }
+  ],
+  "conflicts": [],
+  "inject": {
+    "src/main.tsx": {
+      "imports": [
+        "import { AuthProvider } from '@/contexts/AuthContext';"
+      ],
+      "wrap": {
+        "component": "AuthProvider",
+        "target": "App"
+      }
+    },
+    "src/App.tsx": {
+      "imports": [
+        "import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';",
+        "import { ProtectedRoute } from '@/components/auth/ProtectedRoute';",
+        "import { Login } from '@/pages/auth/Login';",
+        "import { Register } from '@/pages/auth/Register';",
+        "import { ForgotPassword } from '@/pages/auth/ForgotPassword';"
+      ],
+      "routes": [
+        "          <Route path=\"/auth/login\" element={<ProtectedRoute requireAuth={false}><Login /></ProtectedRoute>} />",
+        "          <Route path=\"/auth/register\" element={<ProtectedRoute requireAuth={false}><Register /></ProtectedRoute>} />",
+        "          <Route path=\"/auth/forgot-password\" element={<ProtectedRoute requireAuth={false}><ForgotPassword /></ProtectedRoute>} />",
+        "          <Route path=\"/unauthorized\" element={<div className=\"p-8 text-center\"><h1 className=\"text-2xl font-bold\">Unauthorized</h1><p>You don't have permission to access this page.</p></div>} />"
+      ]
+    },
+    "src/lib/utils.ts": {
+      "ensure": true,
+      "content": "import { type ClassValue, clsx } from \"clsx\";\nimport { twMerge } from \"tailwindcss-merge\";\n\nexport function cn(...inputs: ClassValue[]) {\n  return twMerge(clsx(inputs));\n}"
+    }
+  },
+  "features": [
+    "Complete authentication flow (login, register, forgot password)",
+    "Protected routes with role-based access control",
+    "Form validation using React Hook Form and Zod",
+    "Password strength indicator on registration",
+    "Remember me functionality",
+    "Token-based authentication with refresh tokens",
+    "Responsive design with Shadcn UI components",
+    "Comprehensive error handling and loading states",
+    "Email verification support",
+    "TypeScript support with proper type definitions",
+    "Authentication context with React hooks",
+    "Automatic token refresh and logout on expiry"
+  ]
+}

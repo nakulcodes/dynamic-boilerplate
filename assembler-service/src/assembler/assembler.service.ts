@@ -324,25 +324,96 @@ export class AssemblerService {
     for (const [targetFile, injection] of Object.entries(injections)) {
       const filePath = path.join(workDir, targetFile);
 
+      // Handle 'ensure' directive - create file if it doesn't exist
+      if (injection.ensure && !await fs.pathExists(filePath)) {
+        await fs.ensureFile(filePath);
+        if (injection.content) {
+          await fs.writeFile(filePath, injection.content, 'utf8');
+          continue;
+        }
+      }
+
       if (await fs.pathExists(filePath)) {
         let content = await fs.readFile(filePath, 'utf8');
 
-        // Apply import injections
-        if (injection.import && Array.isArray(injection.import)) {
-          const importLines = injection.import.join('\n');
-          content = content.replace(
-            '// MODULE_IMPORTS_PLACEHOLDER',
-            `${importLines}\n// MODULE_IMPORTS_PLACEHOLDER`
-          );
+        // Apply import injections (both 'import' and 'imports' keys supported)
+        const imports = injection.import || injection.imports;
+        if (imports && Array.isArray(imports)) {
+          const importLines = imports.join('\n');
+          // Support both NestJS and React style placeholders
+          if (content.includes('// MODULE_IMPORTS_PLACEHOLDER')) {
+            content = content.replace(
+              '// MODULE_IMPORTS_PLACEHOLDER',
+              `${importLines}\n// MODULE_IMPORTS_PLACEHOLDER`
+            );
+          } else if (content.includes('// IMPORTS_PLACEHOLDER')) {
+            content = content.replace(
+              '// IMPORTS_PLACEHOLDER',
+              `${importLines}\n// IMPORTS_PLACEHOLDER`
+            );
+          } else {
+            // If no placeholder, add imports after the last import statement
+            const lastImportIndex = content.lastIndexOf('import ');
+            if (lastImportIndex !== -1) {
+              const endOfLine = content.indexOf('\n', lastImportIndex);
+              content = content.slice(0, endOfLine + 1) + importLines + '\n' + content.slice(endOfLine + 1);
+            }
+          }
         }
 
-        // Apply register injections
+        // Apply register injections (NestJS modules)
         if (injection.register && Array.isArray(injection.register)) {
           const registerLines = injection.register.map(reg => `    ${reg},`).join('\n');
           content = content.replace(
             '    // MODULE_REGISTER_PLACEHOLDER',
             `${registerLines}\n    // MODULE_REGISTER_PLACEHOLDER`
           );
+        }
+
+        // Apply routes injections (React Router)
+        if (injection.routes && Array.isArray(injection.routes)) {
+          const routeLines = injection.routes.join('\n');
+          if (content.includes('{/* ROUTES_PLACEHOLDER */}')) {
+            content = content.replace(
+              '{/* ROUTES_PLACEHOLDER */}',
+              `${routeLines}\n          {/* ROUTES_PLACEHOLDER */}`
+            );
+          } else if (content.includes('// ROUTES_PLACEHOLDER')) {
+            content = content.replace(
+              '// ROUTES_PLACEHOLDER',
+              `${routeLines}\n// ROUTES_PLACEHOLDER`
+            );
+          }
+        }
+
+        // Apply component injections (React components)
+        if (injection.components && Array.isArray(injection.components)) {
+          const componentLines = injection.components.join('\n');
+          if (content.includes('{/* COMPONENTS_PLACEHOLDER */}')) {
+            content = content.replace(
+              '{/* COMPONENTS_PLACEHOLDER */}',
+              `${componentLines}\n      {/* COMPONENTS_PLACEHOLDER */}`
+            );
+          }
+        }
+
+        // Apply wrapper injections (React Context Providers)
+        if (injection.wrap && injection.wrap.component && injection.wrap.target) {
+          const { component, target } = injection.wrap;
+          // Wrap the target component with the provider
+          const targetPattern = new RegExp(`<${target}([^>]*?)(\\/?)>`, 'g');
+          const targetClosingPattern = new RegExp(`<\\/${target}>`, 'g');
+
+          if (content.includes(`<${target}`)) {
+            // Find and wrap the component
+            content = content.replace(targetPattern, (match, attrs, selfClosing) => {
+              if (selfClosing) {
+                return `<${component}>\n        <${target}${attrs} />\n      </${component}>`;
+              }
+              return `<${component}>\n        <${target}${attrs}>`;
+            });
+            content = content.replace(targetClosingPattern, `</${target}>\n      </${component}>`);
+          }
         }
 
         await fs.writeFile(filePath, content, 'utf8');

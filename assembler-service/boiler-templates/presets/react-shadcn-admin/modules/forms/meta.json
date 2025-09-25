@@ -1,0 +1,47 @@
+{
+  "name": "forms",
+  "displayName": "Advanced Forms",
+  "description": "Comprehensive form components with validation, file upload, multi-step forms, and dynamic fields",
+  "category": "ui-components",
+  "required": false,
+  "deps": {
+    "react-hook-form": "^7.54.0",
+    "@hookform/resolvers": "^3.9.0",
+    "zod": "^3.23.8",
+    "react-dropzone": "^14.3.5",
+    "@radix-ui/react-select": "^2.1.2",
+    "@radix-ui/react-switch": "^1.1.1",
+    "@radix-ui/react-slider": "^1.2.1",
+    "@radix-ui/react-radio-group": "^1.2.1",
+    "@radix-ui/react-calendar": "^1.1.1",
+    "date-fns": "^3.6.0"
+  },
+  "devDeps": {
+    "@types/react-dropzone": "^5.1.0"
+  },
+  "env": [],
+  "conflicts": [],
+  "inject": {
+    "src/App.tsx": {
+      "imports": [
+        "import { FormsPage } from '@/pages/FormsPage';"
+      ],
+      "routes": [
+        "          <Route path=\"/forms\" element={<ProtectedRoute><FormsPage /></ProtectedRoute>} />"
+      ]
+    }
+  },
+  "features": [
+    "Multi-step wizard forms",
+    "Dynamic form fields (add/remove)",
+    "File upload with drag & drop",
+    "Date and time pickers",
+    "Select with search",
+    "Radio groups and checkboxes",
+    "Sliders and switches",
+    "Form validation with Zod",
+    "Conditional fields",
+    "Auto-save functionality",
+    "Form templates"
+  ]
+}

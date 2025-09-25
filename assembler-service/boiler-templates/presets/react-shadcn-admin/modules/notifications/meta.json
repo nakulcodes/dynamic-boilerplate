@@ -1,0 +1,58 @@
+{
+  "name": "notifications",
+  "displayName": "Notifications System",
+  "description": "Toast notifications, push notifications, and in-app notification center with real-time updates",
+  "category": "communication",
+  "required": false,
+  "deps": {
+    "sonner": "^1.7.2",
+    "@radix-ui/react-toast": "^1.2.2",
+    "socket.io-client": "^4.8.1",
+    "date-fns": "^3.6.0"
+  },
+  "devDeps": {},
+  "env": [
+    {
+      "key": "VITE_WEBSOCKET_URL",
+      "required": false,
+      "example": "ws://localhost:3000",
+      "description": "WebSocket server URL for real-time notifications"
+    }
+  ],
+  "conflicts": [],
+  "inject": {
+    "src/main.tsx": {
+      "imports": [
+        "import { Toaster } from 'sonner';",
+        "import { NotificationProvider } from '@/contexts/NotificationContext';"
+      ],
+      "components": [
+        "      <Toaster position=\"top-right\" richColors closeButton />"
+      ],
+      "wrap": {
+        "component": "NotificationProvider",
+        "target": "App"
+      }
+    },
+    "src/layouts/AdminLayout.tsx": {
+      "imports": [
+        "import { NotificationCenter } from '@/components/notifications/NotificationCenter';"
+      ],
+      "components": [
+        "            <NotificationCenter />"
+      ]
+    }
+  },
+  "features": [
+    "Toast notifications with multiple styles",
+    "Push notification support",
+    "Real-time notifications via WebSocket",
+    "Notification center with history",
+    "Mark as read/unread",
+    "Notification preferences",
+    "Sound alerts",
+    "Desktop notifications API",
+    "Notification groups",
+    "Auto-dismiss options"
+  ]
+}

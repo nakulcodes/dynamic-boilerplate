@@ -1,0 +1,37 @@
+{
+  "name": "charts",
+  "displayName": "Charts & Analytics",
+  "description": "Beautiful and interactive charts using Recharts library with various chart types and real-time data support",
+  "category": "visualization",
+  "required": false,
+  "deps": {
+    "recharts": "^2.13.3",
+    "@radix-ui/react-tabs": "^1.1.1",
+    "date-fns": "^3.6.0"
+  },
+  "devDeps": {},
+  "env": [],
+  "conflicts": [],
+  "inject": {
+    "src/App.tsx": {
+      "imports": [
+        "import { ChartsPage } from '@/pages/ChartsPage';"
+      ],
+      "routes": [
+        "          <Route path=\"/charts\" element={<ProtectedRoute><ChartsPage /></ProtectedRoute>} />"
+      ]
+    }
+  },
+  "features": [
+    "Line charts with multiple datasets",
+    "Bar and column charts",
+    "Pie and donut charts",
+    "Area charts with gradients",
+    "Real-time data updates",
+    "Interactive tooltips and legends",
+    "Export chart as image",
+    "Responsive design",
+    "Dark mode support",
+    "Custom color themes"
+  ]
+}
