@@ -1,13 +1,11 @@
 import { Controller, Get, Query, Param, Delete, ParseIntPipe, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam } from '@nestjs/swagger';
 import { ProjectHistoryService } from './project-history.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { User } from '../database/entities/user.entity';
 
 @ApiTags('Project History')
 @Controller('project-history')
-@UseGuards(JwtAuthGuard)
 export class ProjectHistoryController {
   constructor(private readonly projectHistoryService: ProjectHistoryService) {}
 
